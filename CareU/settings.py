@@ -122,7 +122,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# Set our custom user model
-AUTH_USER_MODEL = 'usermanagement.CustomUser' # <-- IMPORTANT: Use 'usermanagement'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/accounts/login/' # Using '/accounts/' prefix for clarity
