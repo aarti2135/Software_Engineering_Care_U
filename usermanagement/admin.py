@@ -1,4 +1,5 @@
 from django.contrib import admin
+from usermanagement.models.custom_user import *
 
 from usermanagement.models import *
 # Register your models here.
