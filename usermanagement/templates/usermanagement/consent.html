@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Data Sharing Consent</title>
+  <style>
+    /* styling … (keep all from example) */
+  </style>
+</head>
+<body>
+{% if messages %}
+  <ul class="messages" style="list-style:none; padding:10px;">
+    {% for message in messages %}
+      <li style="
+        background-color:
+          {% if message.tags == 'success' %}#d4edda
+          {% elif message.tags == 'warning' %}#fff3cd
+          {% elif message.tags == 'error' %}#f8d7da
+          {% else %}#e2e3e5{% endif %};
+        color:#000;
+        border-radius:5px;
+        margin-bottom:8px;
+        padding:8px 12px;
+        font-weight:500;">
+        {{ message }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+  <main class="card" role="main" aria-labelledby="consent-heading">
+    <h1 id="consent-heading">Share anonymized health data?</h1>
+
+    <p class="muted">We'd like your consent…</p>
+
+    <section class="policy">
+      … <!-- everything from the example -->
+    </section>
+
+    <form id="consentForm" method="post" action="{% url 'consent' %}">
+      {% csrf_token %}
+      <input type="hidden" name="user_id" value="{{ user.id|default:'' }}" />
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <label>
+          <input id="consentCheckbox" name="consent" type="checkbox" value="yes" />
+          I agree to allow anonymized, aggregated sharing of my health data.
+        </label>
+
+        <div class="help">
+          If you don't agree, simply leave the checkbox unchecked and click
+          <strong>Do not agree</strong>.
+        </div>
+
+        <div class="controls">
+          <button type="submit" class="btn btn-primary" id="agreeBtn" disabled>Agree</button>
+          <button type="button" class="btn btn-ghost" id="disagreeBtn">Do not agree</button>
+          <div id="message" style="margin-left:auto;"></div>
+        </div>
+      </div>
+    </form>
+
+    <!-- ✅ ADD YOUR SCRIPT HERE (replace the old comment) -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const checkbox = document.getElementById("consentCheckbox");
+        const agreeBtn = document.getElementById("agreeBtn");
+        const disagreeBtn = document.getElementById("disagreeBtn");
+        const messageBox = document.getElementById("message");
+        const form = document.getElementById("consentForm");
+
+        // Enable/disable Agree button based on checkbox
+        checkbox.addEventListener("change", () => {
+          agreeBtn.disabled = !checkbox.checked;
+          messageBox.textContent = "";
+        });
+
+        // Handle “Do not agree” button
+        disagreeBtn.addEventListener("click", () => {
+          // Make sure checkbox is unchecked
+          checkbox.checked = false;
+
+          // Optionally show feedback
+          messageBox.textContent = "You chose not to share data.";
+
+          // Submit the form automatically with no consent
+          form.submit();
+        });
+      });
+    </script>
+    <!-- ✅ END OF SCRIPT -->
+  </main>
+</body>
+</html>
