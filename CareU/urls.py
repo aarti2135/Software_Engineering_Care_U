@@ -25,5 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('consent')),  # redirect / → /consent/
     path('', include('usermanagement.views.consent_urls')),
+    path('api/', include('healthdata.urls')),
+
 ]
 
