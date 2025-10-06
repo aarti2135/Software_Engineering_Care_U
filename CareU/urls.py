@@ -1,22 +1,37 @@
-"""
-URL configuration for CareU project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+# CareU/urls.py
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.shortcuts import redirect
+
+
+def home_redirect(request):
+    """
+    Redirect the root URL depending on authentication:
+      - If logged in  → go to the nutrition dashboard
+      - If anonymous  → go to login page
+    """
+    if request.user.is_authenticated:
+        return redirect('nutrition_dashboard')  # Must exist in healthdata.urls
+    else:
+        return redirect('User_Login:login')  # Namespaced login route
+
 
 urlpatterns = [
+    # Root redirect (home)
+    path('', home_redirect, name='home'),
+
+    # Admin panel
     path('admin/', admin.site.urls),
+
+    # Health / API routes (nutrition dashboard, etc.)
+    path('api/', include('healthdata.urls')),
+
+    # Django REST Framework browsable API auth
+    path('api-auth/', include('rest_framework.urls')),
+
+    # User login / logout / signup (with namespace)
+    path(
+        'accounts/',
+        include(('User_Login.urls', 'User_Login'), namespace='User_Login')
+    ),
 ]

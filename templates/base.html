@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CareU{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #0d1117;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    nav form {
+      display: inline;
+    }
+    nav button {
+      background-color: #2563eb;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    nav button:hover {
+      background-color: #1e40af;
+    }
+    main {
+      padding: 30px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>CareU</h1>
+
+    {% if user.is_authenticated %}
+    <nav>
+      <span>Signed in as <strong>{{ user.username }}</strong></span>
+
+      <!-- ✅ FIXED LOGOUT FORM (POST only) -->
+      <form action="{% url 'logout' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+      </form>
+    </nav>
+    {% endif %}
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
