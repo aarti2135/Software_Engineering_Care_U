@@ -22,6 +22,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
+=======
+    'usermanagement',
+    'healthdata',
+>>>>>>> upstream/main
 
     # Your apps
     #'usermanagement',
