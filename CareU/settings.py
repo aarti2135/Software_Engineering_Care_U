@@ -22,14 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
-=======
-    'usermanagement',
-    'healthdata',
->>>>>>> upstream/main
 
     # Your apps
-    #'usermanagement',
     'usermanagement.apps.UsermanagementConfig',
     'healthdata',
     'User_Login',
@@ -130,9 +124,9 @@ REST_FRAMEWORK = {
 
 # --------------------------------------------------------------------------------------
 # Authentication redirects
-# (After login → dashboard | After logout → login)
 # --------------------------------------------------------------------------------------
-LOGIN_URL = '/accounts/login/'                 # <- corrected
-#LOGIN_REDIRECT_URL = '/api/dashboard/nutrition/'
+LOGIN_URL = '/accounts/login/'
+# If you prefer to always land on dashboard after login, set the next line to:
+# LOGIN_REDIRECT_URL = '/api/dashboard/nutrition/'
 LOGIN_REDIRECT_URL = '/accounts/login/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
