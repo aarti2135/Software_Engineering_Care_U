@@ -1,6 +1,6 @@
 # usermanagement/admin.py
 from django.contrib import admin
-from .models import Profile   # <- import from models.py
+from .models import Profile   # import from models.py (not a package)
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
