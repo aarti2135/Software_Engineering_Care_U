@@ -1,9 +1,9 @@
+# usermanagement/admin.py
 from django.contrib import admin
-from usermanagement.models.custom_user import CustomUser
+from .models import Profile   # import from models.py (not a package)
 
-
-@admin.register(CustomUser)
-class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'data_sharing_consent')
-    list_filter = ('data_sharing_consent',)
-    search_fields = ('username',)
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "age", "height_cm", "weight_kg", "sex")
+    search_fields = ("user__username", "user__email")
+    list_filter = ("sex",)

@@ -1,0 +1,82 @@
+<!-- templates/careu/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareU | Login</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #00aaff, #00ddff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .login-card {
+      background: #fff;
+      width: 360px;
+      padding: 36px 40px;
+      border-radius: 18px;
+      box-shadow: 0 14px 28px rgba(0,0,0,.12);
+    }
+    h2 { margin: 0 0 18px; text-align: center; font-weight: 700; color: #222; }
+    .field { margin: 12px 0; }
+    .label { font-size: 14px; color: #444; margin-bottom: 6px; display: block; }
+    .input {
+      width: 100%; padding: 10px 12px; border: 1px solid #dcdcdc; border-radius: 10px;
+      font-size: 14px;
+    }
+    .btn {
+      width: 100%; padding: 11px 12px; margin-top: 14px; border: 0; border-radius: 10px;
+      background: #007bff; color: #fff; font-weight: 600; cursor: pointer;
+    }
+    .btn:hover { background: #0065d3; }
+    .muted { margin-top: 14px; font-size: 14px; color: #555; text-align: center; }
+    .muted a { color: #005dc2; text-decoration: none; }
+    .muted a:hover { text-decoration: underline; }
+    .error { color: #c62828; margin-top: 10px; text-align: center; }
+    .msg { margin-top: 10px; font-size: 14px; text-align: center; }
+    .msg.success { color: #0a7f2e; }
+    .msg.info { color: #0a4f7f; }
+    .msg.warning { color: #7f5a0a; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h2>Welcome to CareU</h2>
+
+    <!-- Django messages (e.g., 'logged out successfully') -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="msg {{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Use namespaced login URL so reverse() always works -->
+    <form method="post" action="{% url 'User_Login:login' %}">
+      {% csrf_token %}
+      <div class="field">
+        <label class="label" for="id_username">Username</label>
+        <input class="input" type="text" name="username" id="id_username" required>
+      </div>
+      <div class="field">
+        <label class="label" for="id_password">Password</label>
+        <input class="input" type="password" name="password" id="id_password" required>
+      </div>
+
+      {% if form.errors %}
+        <div class="error">Invalid username or password.</div>
+      {% endif %}
+
+      <button class="btn" type="submit">Login</button>
+    </form>
+
+    <div class="muted">
+      Don’t have an account? <a href="{% url 'User_Login:signup' %}">Sign up</a>
+    </div>
+  </div>
+</body>
+</html>
