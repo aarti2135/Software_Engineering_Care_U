@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Provider Alerts</title>
+  <style>
+    body { font-family: Arial; background-color: #f6f8fb; }
+    .card { background: white; border-radius: 8px; padding: 20px; margin: 10px auto; width: 60%; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+    .severity-high { border-left: 5px solid red; }
+    .severity-moderate { border-left: 5px solid orange; }
+    .severity-low { border-left: 5px solid green; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">Provider Alerts</h2>
+
+  {% if alerts %}
+    {% for alert in alerts %}
+      <div class="card severity-{{ alert.severity }}">
+        <h3>{{ alert.alert_type }}</h3>
+        <p>{{ alert.message }}</p>
+        <small>Created at: {{ alert.created_at }}</small>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="text-align:center;">No alerts detected yet.</p>
+  {% endif %}
+</body>
+</html>

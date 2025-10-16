@@ -71,3 +71,30 @@ def ensure_profile_exists(sender, instance, created, **kwargs):
     We use get_or_create (safe) instead of touching instance.profile directly.
     """
     Profile.objects.get_or_create(user=instance)
+
+    # ---------------------------------------------------------------------
+    # Provider Alert model for Epic 3 – User Story 3.3
+    # ---------------------------------------------------------------------
+class ProviderAlert(models.Model):
+        """
+        Stores AI-generated alerts for healthcare providers
+        when concerning patient data patterns are detected.
+        """
+        user = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            related_name="provider_alerts"
+        )
+        alert_type = models.CharField(max_length=100)
+        message = models.TextField()
+        severity = models.CharField(max_length=20, choices=[
+            ("low", "Low"),
+            ("moderate", "Moderate"),
+            ("high", "High"),
+        ])
+        created_at = models.DateTimeField(auto_now_add=True)
+        reviewed = models.BooleanField(default=False)
+
+        def __str__(self):
+            return f"{self.alert_type} ({self.severity}) for {self.user.username}"
+
