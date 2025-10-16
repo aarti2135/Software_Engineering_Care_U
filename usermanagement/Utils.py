@@ -1,5 +1,5 @@
 from django.db.models import F
-from .models.custom_user import CustomUser
+from .models import CustomUser
 
 
 def share_user_data_with_insurer(user_id):

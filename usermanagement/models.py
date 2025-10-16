@@ -5,7 +5,26 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 
+# ---------------------------------------------------------------------
+# CustomUser: used for consent tracking
+# ---------------------------------------------------------------------
+class CustomUser(models.Model):
+    """
+    Custom user model for consent management.
+    """
+    username = models.CharField(max_length=150, unique=True)
+    data_sharing_consent = models.BooleanField(
+        default=False,
+        verbose_name="Consent to share anonymized health data for research/insurance purposes.",
+    )
+    consent_timestamp = models.DateTimeField(null=True, blank=True)
 
+    def __str__(self):
+        return self.username
+
+# ---------------------------------------------------------------------
+# Profile model (already existing)
+# ---------------------------------------------------------------------
 class Profile(models.Model):
     """
     Stores additional user information beyond the built-in Django User model.

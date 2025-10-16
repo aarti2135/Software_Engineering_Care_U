@@ -2,6 +2,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from usermanagement.views import consent_urls
 
 
 def home_redirect(request):
@@ -22,6 +23,7 @@ urlpatterns = [
 
     # Admin panel
     path('admin/', admin.site.urls),
+    path('', include(consent_urls)),
 
     # Health / API routes (nutrition dashboard, etc.)
     path('api/', include('healthdata.urls')),
