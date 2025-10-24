@@ -38,6 +38,22 @@
   </div>
 </nav>
 
+<!-- Health Insights Banner -->
+{% load static %}
+<div class="container mt-3">
+  <div class="alert alert-info d-flex align-items-center justify-content-between" style="border-radius: 12px; border: 0; box-shadow: 0 4px 12px rgba(20,40,80,.06);">
+    <div class="d-flex align-items-center gap-2">
+      <span style="font-size: 1.5rem;">💡</span>
+      <div>
+        <strong>Health Insights Available</strong>
+        <p class="mb-0 small">Check your personalized health recommendations</p>
+      </div>
+    </div>
+    <a href="{% url 'reminders_dashboard' %}" class="btn btn-primary btn-sm" style="border-radius: 10px;">
+      View Insights
+    </a>
+  </div>
+</div>
 <div class="container">
 
   {% if messages %}

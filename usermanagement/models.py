@@ -23,6 +23,25 @@ class Profile(models.Model):
         ("other", "Other / Prefer not to say"),
     ]
 
+    ACTIVITY_CHOICES = [
+        ('sedentary', 'Sedentary - Little or no exercise'),
+        ('light', 'Lightly Active - Light exercise 1-3 days/week'),
+        ('moderate', 'Moderately Active - Moderate exercise 3-5 days/week'),
+        ('active', 'Active - Hard exercise 6-7 days/week'),
+        ('very_active', 'Very Active - Very hard exercise & physical job'),
+    ]
+
+    # ... existing fields (user, age, height_cm, weight_kg, sex, consent fields) ...
+
+    activity_level = models.CharField(
+        max_length=20,
+        choices=ACTIVITY_CHOICES,
+        default='sedentary',
+        help_text="Your typical weekly activity level"
+    )
+
+
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -98,8 +117,4 @@ class ProviderAlert(models.Model):
 
     def __str__(self):
         return f"{self.alert_type} ({self.severity}) for {self.user.username}"
-
-
-# ❌ DELETED: CustomUser class
-# All consent functionality moved to Profile model
 

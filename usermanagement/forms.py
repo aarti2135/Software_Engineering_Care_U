@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm  # ← ADD THIS if missing
 from django.contrib.auth.models import User
 from .models import Profile
 
@@ -9,10 +9,13 @@ class SignupForm(UserCreationForm):
     height_cm = forms.IntegerField(required=False, min_value=0, label="Height (cm)")
     weight_kg = forms.DecimalField(required=False, min_value=0, max_digits=5, decimal_places=2, label="Weight (kg)")
     sex = forms.ChoiceField(required=False, choices=Profile.SEX_CHOICES, label="Sex")
+    activity_level = forms.ChoiceField(required=False, choices=Profile.ACTIVITY_CHOICES,
+                                       label="Activity Level")  # ← ADD THIS
 
     class Meta:
         model = User
-        fields = ("username", "email", "password1", "password2", "age", "height_cm", "weight_kg", "sex")
+        fields = ("username", "email", "password1", "password2", "age", "height_cm", "weight_kg", "sex",
+                  "activity_level")  # ← ADD activity_level here
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -39,6 +42,7 @@ class SignupForm(UserCreationForm):
                 "height_cm": self.cleaned_data.get("height_cm"),
                 "weight_kg": self.cleaned_data.get("weight_kg"),
                 "sex": self.cleaned_data.get("sex"),
+                "activity_level": self.cleaned_data.get("activity_level"),  # ← ADD THIS
             },
         )
         return user

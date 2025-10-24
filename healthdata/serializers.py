@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import NutritionEntry
+from .models import HealthReminder
 
 class NutritionEntrySerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,3 +20,34 @@ class NutritionEntrySerializer(serializers.ModelSerializer):
         if attrs.get("calories", 0) < 0:
             raise serializers.ValidationError({"calories": "Cannot be negative."})
         return attrs
+
+
+class HealthReminderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for HealthReminder API.
+    Provides read-only access to reminders and actions to dismiss/act on them.
+    """
+    is_active = serializers.ReadOnlyField()
+
+    class Meta:
+        model = HealthReminder
+        fields = [
+            'id',
+            'reminder_type',
+            'title',
+            'message',
+            'explanation',
+            'priority',
+            'actionable_steps',
+            'created_at',
+            'dismissed_at',
+            'acted_upon',
+            'acted_upon_at',
+            'is_active',
+        ]
+        read_only_fields = [
+            'id',
+            'created_at',
+            'dismissed_at',
+            'acted_upon_at',
+        ]

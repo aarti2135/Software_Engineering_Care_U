@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Health Insights · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #007AFF;
+      --secondary: #5856D6;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --text-primary: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --card-radius: 16px;
+      --sidebar-width: 80px;
+      --header-height: 70px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .app-container {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr 300px;
+      min-height: 100vh;
+    }
+
+    /* Expandable Sections */
+    .why-toggle, .steps-toggle {
+        cursor: pointer;
+        color: var(--primary);
+        font-weight: 500;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: color 0.2s ease;
+        margin-bottom: 0.75rem;
+        text-decoration: none;
+        border: none;
+        background: none;
+        padding: 0;
+    }
+
+    .why-toggle:hover, .steps-toggle:hover {
+        color: var(--secondary);
+    }
+
+    .why-content, .steps-content {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 3px solid var(--primary);
+    }
+
+    .action-steps {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .action-steps ul {
+        margin: 0;
+        padding-left: 1rem;
+    }
+
+    .action-steps li {
+        margin: 0.5rem 0;
+        color: var(--text-primary);
+    }
+
+    /* Collapse transition */
+    .collapse:not(.show) {
+        display: none;
+    }
+
+    .collapsing {
+        height: 0;
+        overflow: hidden;
+        transition: height 0.35s ease;
+    }
+
+    /* Left Sidebar */
+    .sidebar-left {
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      padding: 2rem 0;
+      position: fixed;
+      width: var(--sidebar-width);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      text-decoration: none;
+      position: relative;
+    }
+
+    .nav-icon:hover, .nav-icon.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .nav-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--text-primary);
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      margin-left: 0.5rem;
+      z-index: 1001;
+    }
+
+    .nav-icon i {
+      font-size: 1.25rem;
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .user-info {
+      text-align: center;
+      margin-top: 0.1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Main Content */
+    .main-content {
+      grid-column: 2;
+      padding: 2rem;
+      margin-left: var(--sidebar-width);
+    }
+
+    /* Right Sidebar */
+    .sidebar-right {
+      background: var(--bg-primary);
+      border-left: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      position: fixed;
+      right: 0;
+      width: 300px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* Header */
+    .week-overview {
+      background: var(--bg-primary);
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .day-card {
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .day-card.current {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+    }
+
+    .day-card .day-name {
+      font-size: 0.75rem;
+      font-weight: 500;
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+
+    .day-card .date {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-ring {
+      width: 36px;
+      height: 36px;
+      margin: 0 auto;
+    }
+
+    /* Reminder Cards */
+    .reminder-card {
+      background: var(--bg-primary);
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      border-left: 4px solid var(--primary);
+      transition: all 0.2s ease;
+    }
+
+    .reminder-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    .reminder-card.warning {
+      border-left-color: var(--warning);
+    }
+
+    .reminder-card.success {
+      border-left-color: var(--success);
+    }
+
+    .reminder-card.danger {
+      border-left-color: var(--danger);
+    }
+
+    .reminder-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .reminder-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .reminder-icon.nutrition {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+    }
+
+    .reminder-icon.activity {
+      background: linear-gradient(135deg, #00BFFF, #1E90FF);
+    }
+
+    .reminder-icon.health {
+      background: linear-gradient(135deg, #32CD32, #228B22);
+    }
+
+    .reminder-content {
+      flex: 1;
+    }
+
+    .reminder-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      font-size: 1.1rem;
+    }
+
+    .reminder-message {
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* Expandable Sections */
+    .why-toggle, .steps-toggle {
+      cursor: pointer;
+      color: var(--primary);
+      font-weight: 500;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s ease;
+      margin-bottom: 0.75rem;
+    }
+
+    .why-toggle:hover, .steps-toggle:hover {
+      color: var(--secondary);
+    }
+
+    .why-content, .steps-content {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-left: 3px solid var(--primary);
+    }
+
+    .action-steps {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .action-steps ul {
+      margin: 0;
+      padding-left: 1rem;
+    }
+
+    .action-steps li {
+      margin: 0.5rem 0;
+      color: var(--text-primary);
+    }
+
+    /* Progress Bars */
+    .progress-container {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      height: 6px;
+      overflow: hidden;
+      margin: 0.75rem 0;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: between;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* Action Buttons */
+    .reminder-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .btn-action {
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-done {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-dismiss {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .btn-done:hover {
+      background: #2aa350;
+      color: white;
+    }
+
+    .btn-dismiss:hover {
+      background: var(--bg-secondary);
+    }
+
+    .btn-floating {
+      position: fixed;
+      bottom: 2rem;
+      right: 330px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 16px rgba(0,122,255,0.3);
+      z-index: 100;
+    }
+
+    /* Color Palette */
+    .color-palette {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .color-option {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .color-option.active {
+      border-color: var(--text-primary);
+    }
+
+    /* AI Insight */
+    .ai-insight {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .ai-insight .icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .sidebar-right {
+        display: none;
+      }
+      .app-container {
+        grid-template-columns: var(--sidebar-width) 1fr;
+      }
+      .btn-floating {
+        right: 2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar-left {
+        display: none;
+      }
+      .main-content {
+        margin-left: 0;
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- Left Sidebar -->
+    <nav class="sidebar-left">
+      <div>
+        <div class="user-avatar">
+          {{ request.user.username|first|upper }}
+        </div>
+        <div class="user-info">{{ request.user.username }}</div>
+      </div>
+
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Home">
+        <i>🏠</i>
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Goals">
+        <i>🎯</i>
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Chat">
+        <i>💬</i>
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Analytics">
+        <i>📊</i>
+      </a>
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon active" data-tooltip="Reminders">
+        <i>🔔</i>
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Settings">
+        <i>⚙️</i>
+      </a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Week Overview Header -->
+      <div class="week-overview">
+        <h5 class="mb-3 fw-semibold">Weekly Overview</h5>
+        <div class="row g-2">
+          {% for day in week_days %}
+          <div class="col">
+            <div class="day-card {% if day.is_today %}current{% endif %}">
+              <div class="day-name">{{ day.name }}</div>
+              <div class="date">{{ day.date }}</div>
+              <div class="progress-ring">
+                <div style="width: 24px; height: 24px; border: 2px solid {% if day.is_today %}white{% else %}{% if day.has_data %}var(--success){% else %}var(--border){% endif %}{% endif %}; border-radius: 50%;"></div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Reminder Cards -->
+      <!-- Reminder Cards -->
+      <h4 class="fw-semibold mb-3">Today's Health Insights</h4>
+
+      {% if reminders %}
+        {% for reminder in reminders %}
+        <div class="reminder-card priority-{{ reminder.priority }}">
+          <div class="reminder-header">
+            <div class="reminder-icon icon-{{ reminder.reminder_type }}">
+              {% if reminder.reminder_type == 'nutrition' %}🍎
+              {% elif reminder.reminder_type == 'activity' %}🏃
+              {% else %}💡{% endif %}
+            </div>
+            <div class="reminder-content">
+              <div class="reminder-title">{{ reminder.title }}</div>
+              <div class="reminder-message">{{ reminder.message }}</div>
+            </div>
+          </div>
+
+          <!-- Why This Matters - Collapsible -->
+          {% if reminder.explanation %}
+          <div class="why-matters">
+            <button class="why-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#why-{{ reminder.id }}" aria-expanded="false" aria-controls="why-{{ reminder.id }}">
+              <span>Why this matters</span>
+              <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
+
+            <div class="collapse why-content" id="why-{{ reminder.id }}">
+              <div class="why-content-inner">
+                {{ reminder.explanation|linebreaks }}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- What You Can Do - Collapsible -->
+          {% if reminder.actionable_steps %}
+          <div class="actionable-steps">
+            <button class="steps-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#steps-{{ reminder.id }}" aria-expanded="false" aria-controls="steps-{{ reminder.id }}">
+              <span>What you can do</span>
+              <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
+
+            <div class="collapse steps-content" id="steps-{{ reminder.id }}">
+              <div class="action-steps">
+                <ul>
+                  {% for step in reminder.actionable_steps %}
+                    <li>{{ step }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Actions -->
+          <div class="reminder-actions">
+            <form method="post" action="{% url 'act_on_reminder' reminder.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-action btn-done">✓ Done</button>
+            </form>
+            <form method="post" action="{% url 'dismiss_reminder' reminder.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn-action btn-dismiss">Dismiss</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-5">
+          <div style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;">✨</div>
+          <h5 class="fw-semibold">You're all caught up!</h5>
+          <p class="text-muted">No reminders for today. Keep up the great work!</p>
+        </div>
+      {% endif %}
+
+      <!-- Add Reminder Button -->
+      <button class="btn-floating">+</button>
+
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="sidebar-right">
+      <h6 class="fw-semibold mb-3">Quick Actions</h6>
+      <button class="btn btn-outline w-100 mb-3">+ Add Note</button>
+      <button class="btn btn-primary w-100">Mark All Done</button>
+
+      <div class="mt-4">
+        <h6 class="fw-semibold mb-3">Theme Colors</h6>
+        <div class="color-palette">
+          <div class="color-option active" style="background: #007AFF;"></div>
+          <div class="color-option" style="background: #5856D6;"></div>
+          <div class="color-option" style="background: #FF2D55;"></div>
+          <div class="color-option" style="background: #34C759;"></div>
+        </div>
+      </div>
+
+      <!-- AI Insight of the Day -->
+      <div class="ai-insight">
+        <div class="icon">🤖</div>
+        <h6 class="fw-semibold">AI Insight</h6>
+        <p class="small mb-0">"Consistent small improvements lead to lasting health changes. Celebrate your progress today!"</p>
+      </div>
+    </aside>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Theme color switching
+    document.querySelectorAll('.color-option').forEach(option => {
+      option.addEventListener('click', function() {
+        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+
+        const color = this.style.backgroundColor;
+        document.documentElement.style.setProperty('--primary', color);
+      });
+    });
+
+    // Smooth interactions
+    document.querySelectorAll('.reminder-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+      });
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dismiss Insight · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f6f8fb 0%, #e9ecef 100%);
+      min-height: 100vh;
+      font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .navbar-brand { font-weight: 700; }
+    .confirm-card {
+      max-width: 600px;
+      margin: 3rem auto;
+      border: 0;
+      border-radius: 16px;
+      box-shadow: 0 10px 22px rgba(20,40,80,.08);
+    }
+    .icon-warning {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #ffc107, #ff9800);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 1.5rem;
+    }
+    .btn-action {
+      border-radius: 10px;
+      padding: .65rem 1.75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'nutrition_dashboard' %}">Care U</a>
+    <div class="text-white-50">{{ request.user.username }}</div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="card confirm-card">
+    <div class="card-body p-5 text-center">
+
+      <div class="icon-warning">⚠️</div>
+
+      <h4 class="fw-bold mb-3">Dismiss This Insight?</h4>
+
+      <p class="text-muted mb-4">
+        Are you sure you want to dismiss:<br>
+        <strong class="text-dark">"{{ reminder.title }}"</strong>
+      </p>
+
+      <div class="alert alert-warning text-start mb-4">
+        <small>
+          <strong>Note:</strong> Dismissing this reminder will hide it from your dashboard.
+          You can always view dismissed reminders in your history.
+        </small>
+      </div>
+
+      <form method="post" class="d-flex gap-2 justify-content-center">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning btn-action">
+          Yes, Dismiss
+        </button>
+        <a href="{% url 'reminders_dashboard' %}" class="btn btn-outline-secondary btn-action">
+          Cancel
+        </a>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
