@@ -23,14 +23,16 @@ class ConsentView(LoginRequiredMixin, View):
         """Handle consent form submission."""
         user = request.user
         profile = user.profile
-        consent_value = request.POST.get("consent")  # 'agree' or 'disagree'
 
-        # Update consent status
-        profile.data_sharing_consent = (consent_value == "agree")
+        # Get consent value from form ('yes' or 'no')
+        consent_value = (request.POST.get("consent") or "").strip().lower()
+
+        # Update profile consent flag
+        profile.data_sharing_consent = (consent_value == "yes")
         profile.consent_timestamp = timezone.now()
         profile.save()
 
-        # If agreed, trigger data sharing
+        # Provide feedback
         if profile.data_sharing_consent:
             result = share_user_data_with_insurer(user)
             messages.success(

@@ -25,11 +25,9 @@
     <div class="ms-auto d-flex align-items-center gap-3 text-white-50">
       <span>Signed in as <strong class="text-white">{{ request.user.username }}</strong></span>
 
-
-       <a class="btn btn-sm btn-outline-info" href="{% url 'consent' %}">
+      <a class="btn btn-sm btn-outline-info" href="{% url 'consent' %}">
         Consent
       </a>
-
 
       <a class="btn btn-sm btn-outline-light" href="{% url 'User_Login:logout' %}?next={% url 'User_Login:login' %}">
         Logout
@@ -41,7 +39,8 @@
 <!-- Health Insights Banner -->
 {% load static %}
 <div class="container mt-3">
-  <div class="alert alert-info d-flex align-items-center justify-content-between" style="border-radius: 12px; border: 0; box-shadow: 0 4px 12px rgba(20,40,80,.06);">
+  <div class="alert alert-info d-flex align-items-center justify-content-between"
+       style="border-radius: 12px; border: 0; box-shadow: 0 4px 12px rgba(20,40,80,.06);">
     <div class="d-flex align-items-center gap-2">
       <span style="font-size: 1.5rem;">💡</span>
       <div>
@@ -49,11 +48,18 @@
         <p class="mb-0 small">Check your personalized health recommendations</p>
       </div>
     </div>
-    <a href="{% url 'reminders_dashboard' %}" class="btn btn-primary btn-sm" style="border-radius: 10px;">
-      View Insights
-    </a>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'reminders_dashboard' %}" class="btn btn-primary btn-sm" style="border-radius: 10px;">
+        View Insights
+      </a>
+      <!-- NEW: Provider Alerts button (matches theme) -->
+      <a href="{% url 'provider_alerts' %}" class="btn btn-outline-warning btn-sm" style="border-radius: 10px;">
+        🩺 Provider Alerts
+      </a>
+    </div>
   </div>
 </div>
+
 <div class="container">
 
   {% if messages %}
@@ -199,10 +205,11 @@
 
     </div>
   </div>
-    <!-- Data Sharing / Provider Request Section -->
+
+  <!-- Data Sharing / Provider Request Section -->
   <hr>
   <div class="text-center mt-4">
-    <form method="post" action="{% url 'request_data_sharing' %}">
+    <form method="post" action="{% url 'request-sharing' %}">
       {% csrf_token %}
       <button type="submit" class="btn btn-outline-primary px-4">
         Request Patient Data

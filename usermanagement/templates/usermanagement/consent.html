@@ -58,7 +58,9 @@
       <form method="post" id="consentForm" class="consent-buttons">
         {% csrf_token %}
         <input type="hidden" name="user_id" value="{{ request.user.id }}">
+
         <button type="submit" name="consent" value="yes" class="btn btn-success me-2">Agree</button>
+
         <button type="submit" name="consent" value="no" class="btn btn-danger">Disagree</button>
       </form>
 

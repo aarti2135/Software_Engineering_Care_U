@@ -10,5 +10,5 @@ urlpatterns = [
     path('provider/alerts/', ProviderAlertsView.as_view(), name='provider_alerts'),
 
     # Request data sharing (button on dashboard)
-    path('request-sharing/', RequestDataSharingView.as_view(), name='request_data_sharing'),
+    path('request-sharing/', RequestDataSharingView.as_view(), name='request-sharing'),
 ]
