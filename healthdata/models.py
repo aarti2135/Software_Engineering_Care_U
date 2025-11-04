@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class NutritionEntry(models.Model):
     MEAL_CHOICES = [
@@ -207,3 +208,249 @@ class HealthMetrics(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.logged_at.date()} - Health Metrics"
+
+
+# ---------------------------------------------------------------------
+# Models migrated from healthlog (with user relationships added)
+# ---------------------------------------------------------------------
+
+class GlucoseEntry(models.Model):
+    """
+    Stores glucose level readings.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='glucose_entries'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    glucose_mg_dl = models.FloatField(
+        validators=[MinValueValidator(0.0)],
+        help_text="Glucose level in mg/dL"
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.created_at:%Y-%m-%d} - {self.glucose_mg_dl} mg/dL"
+
+
+class MedicationEntry(models.Model):
+    """
+    Stores medication tracking information.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='medication_entries'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    drug_name = models.CharField(max_length=120, default="Unknown")
+    dosage = models.CharField(max_length=120, blank=True, default="")
+    time_taken = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ['-time_taken', '-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.created_at:%Y-%m-%d} - {self.drug_name or 'Unknown'}"
+
+
+class DoctorNote(models.Model):
+    """
+    Stores doctor notes and medical information.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='doctor_notes'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    content = models.TextField(help_text="Doctor's notes or medical information")
+    doctor_name = models.CharField(max_length=200, blank=True, default="")
+    appointment_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - DoctorNote {self.created_at:%Y-%m-%d}"
+
+
+class VitalLog(models.Model):
+    """
+    Stores vital signs (heart rate, blood pressure, temperature).
+    Note: HealthMetrics also has some of these fields, but this provides
+    a simpler alternative for basic vital tracking.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='vital_logs'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    resting_hr = models.PositiveIntegerField(
+        default=0,
+        help_text="Resting heart rate in beats per minute"
+    )
+    systolic = models.PositiveIntegerField(
+        default=0,
+        help_text="Systolic blood pressure (top number)"
+    )
+    diastolic = models.PositiveIntegerField(
+        default=0,
+        help_text="Diastolic blood pressure (bottom number)"
+    )
+    temperature_c = models.FloatField(
+        validators=[MinValueValidator(30.0), MaxValueValidator(45.0)],
+        default=36.5,
+        help_text="Body temperature in Celsius"
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.created_at:%Y-%m-%d} HR:{self.resting_hr} BP:{self.systolic}/{self.diastolic}"
+
+
+class MoodLog(models.Model):
+    """
+    Stores mood, stress, and energy level tracking.
+    """
+    STRESS_CHOICES = [
+        ("low", "Low"),
+        ("med", "Medium"),
+        ("high", "High")
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='mood_logs'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    mood_score = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        default=5,
+        help_text="Mood score from 1-10"
+    )
+    stress_level = models.CharField(
+        max_length=5,
+        choices=STRESS_CHOICES,
+        default="med"
+    )
+    energy_level = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        default=5,
+        help_text="Energy level from 1-10"
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.created_at:%Y-%m-%d} mood:{self.mood_score} stress:{self.stress_level}"
+
+
+class SymptomLog(models.Model):
+    """
+    Stores symptom tracking (headaches, pain, digestion issues).
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='symptom_logs'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    headache_intensity = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(10)],
+        default=0,
+        help_text="Headache intensity from 0-10"
+    )
+    pain_location = models.CharField(max_length=100, blank=True, default="")
+    pain_level = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(10)],
+        default=0,
+        help_text="Pain level from 0-10"
+    )
+    digestion_notes = models.TextField(blank=True, default="")
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.created_at:%Y-%m-%d} pain:{self.pain_level}"
+
+
+class HabitLog(models.Model):
+    """
+    Stores daily habit tracking (water, caffeine, alcohol, supplements).
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='habit_logs'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    date = models.DateField(default=timezone.now)
+    water_ml = models.PositiveIntegerField(
+        default=0,
+        help_text="Water intake in milliliters"
+    )
+    caffeine_servings = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of caffeine servings"
+    )
+    alcohol_servings = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of alcohol servings"
+    )
+    medication_and_supplements = models.TextField(
+        blank=True,
+        default="",
+        help_text="List of medications and supplements taken"
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+        unique_together = ['user', 'date']
+
+    def __str__(self):
+        return f"{self.user} - {self.date} - water:{self.water_ml}ml"
+
+
+class WellbeingLog(models.Model):
+    """
+    Stores well-being activities (mindfulness, outdoor time).
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='wellbeing_logs'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    date = models.DateField(default=timezone.now)
+    mindfulness_minutes = models.PositiveIntegerField(
+        default=0,
+        help_text="Minutes spent on mindfulness/meditation"
+    )
+    time_outdoors_minutes = models.PositiveIntegerField(
+        default=0,
+        help_text="Minutes spent outdoors"
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+        unique_together = ['user', 'date']
+
+    def __str__(self):
+        return f"{self.user} - {self.date} - mindfulness:{self.mindfulness_minutes}min outdoor:{self.time_outdoors_minutes}min"

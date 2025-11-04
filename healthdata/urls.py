@@ -4,6 +4,14 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     NutritionEntryViewSet,
     HealthReminderViewSet,
+    GlucoseEntryViewSet,
+    MedicationEntryViewSet,
+    DoctorNoteViewSet,
+    VitalLogViewSet,
+    MoodLogViewSet,
+    SymptomLogViewSet,
+    HabitLogViewSet,
+    WellbeingLogViewSet,
     nutrition_dashboard,
     nutrition_edit,
     nutrition_delete,
@@ -15,6 +23,14 @@ from .views import (
 router = SimpleRouter()
 router.register('nutrition', NutritionEntryViewSet, basename='nutrition')
 router.register('reminders', HealthReminderViewSet, basename='reminders')
+router.register('glucose', GlucoseEntryViewSet, basename='glucose')
+router.register('medication', MedicationEntryViewSet, basename='medication')
+router.register('doctornotes', DoctorNoteViewSet, basename='doctornotes')
+router.register('vitals', VitalLogViewSet, basename='vitals')
+router.register('mood', MoodLogViewSet, basename='mood')
+router.register('symptoms', SymptomLogViewSet, basename='symptoms')
+router.register('habits', HabitLogViewSet, basename='habits')
+router.register('wellbeing', WellbeingLogViewSet, basename='wellbeing')
 
 
 urlpatterns = [

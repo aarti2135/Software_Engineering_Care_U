@@ -2,13 +2,20 @@
 
 # ---------- DRF API ----------
 from rest_framework import viewsets, permissions, status
-from .models import NutritionEntry
-from .serializers import NutritionEntrySerializer
+from .models import (
+    NutritionEntry, HealthReminder,
+    GlucoseEntry, MedicationEntry, DoctorNote,
+    VitalLog, MoodLog, SymptomLog, HabitLog, WellbeingLog
+)
+from .serializers import (
+    NutritionEntrySerializer, HealthReminderSerializer,
+    GlucoseEntrySerializer, MedicationEntrySerializer, DoctorNoteSerializer,
+    VitalLogSerializer, MoodLogSerializer, SymptomLogSerializer,
+    HabitLogSerializer, WellbeingLogSerializer
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from .models import HealthReminder
-from .serializers import HealthReminderSerializer
 from .reminders_engine import ReminderEngine
 from datetime import datetime, timedelta
 
@@ -289,3 +296,119 @@ def act_on_reminder(request, pk: int):
         return redirect('reminders_dashboard')
 
     return redirect('reminders_dashboard')
+
+
+# ---------------------------------------------------------------------
+# ViewSets for models migrated from healthlog
+# ---------------------------------------------------------------------
+
+class GlucoseEntryViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for glucose entries (user's own entries only).
+    """
+    serializer_class = GlucoseEntrySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return GlucoseEntry.objects.filter(user=self.request.user).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class MedicationEntryViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for medication entries (user's own entries only).
+    """
+    serializer_class = MedicationEntrySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return MedicationEntry.objects.filter(user=self.request.user).order_by("-time_taken", "-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class DoctorNoteViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for doctor notes (user's own notes only).
+    """
+    serializer_class = DoctorNoteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return DoctorNote.objects.filter(user=self.request.user).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class VitalLogViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for vital signs logs (user's own entries only).
+    """
+    serializer_class = VitalLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return VitalLog.objects.filter(user=self.request.user).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class MoodLogViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for mood logs (user's own entries only).
+    """
+    serializer_class = MoodLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return MoodLog.objects.filter(user=self.request.user).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SymptomLogViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for symptom logs (user's own entries only).
+    """
+    serializer_class = SymptomLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return SymptomLog.objects.filter(user=self.request.user).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class HabitLogViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for habit logs (user's own entries only).
+    """
+    serializer_class = HabitLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return HabitLog.objects.filter(user=self.request.user).order_by("-date", "-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class WellbeingLogViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API for well-being logs (user's own entries only).
+    """
+    serializer_class = WellbeingLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return WellbeingLog.objects.filter(user=self.request.user).order_by("-date", "-created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

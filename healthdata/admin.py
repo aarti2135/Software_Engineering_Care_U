@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import NutritionEntry, HealthReminder, ActivityData, SleepData, HealthMetrics
+from .models import (
+    NutritionEntry, HealthReminder, ActivityData, SleepData, HealthMetrics,
+    GlucoseEntry, MedicationEntry, DoctorNote,
+    VitalLog, MoodLog, SymptomLog, HabitLog, WellbeingLog
+)
 
 
 @admin.register(NutritionEntry)
@@ -68,3 +72,71 @@ class HealthMetricsAdmin(admin.ModelAdmin):
     list_display = ('user', 'logged_at', 'weight_kg', 'heart_rate_resting')
     list_filter = ('logged_at',)
     search_fields = ('user__username',)
+
+
+# ---------------------------------------------------------------------
+# Admin registrations for models migrated from healthlog
+# ---------------------------------------------------------------------
+
+@admin.register(GlucoseEntry)
+class GlucoseEntryAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at', 'glucose_mg_dl')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'notes')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(MedicationEntry)
+class MedicationEntryAdmin(admin.ModelAdmin):
+    list_display = ('user', 'drug_name', 'dosage', 'time_taken', 'created_at')
+    list_filter = ('time_taken', 'created_at')
+    search_fields = ('user__username', 'drug_name', 'notes')
+    date_hierarchy = 'time_taken'
+
+
+@admin.register(DoctorNote)
+class DoctorNoteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'doctor_name', 'appointment_date', 'created_at')
+    list_filter = ('appointment_date', 'created_at')
+    search_fields = ('user__username', 'doctor_name', 'content')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(VitalLog)
+class VitalLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at', 'resting_hr', 'systolic', 'diastolic', 'temperature_c')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'notes')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(MoodLog)
+class MoodLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at', 'mood_score', 'stress_level', 'energy_level')
+    list_filter = ('stress_level', 'created_at')
+    search_fields = ('user__username', 'notes')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(SymptomLog)
+class SymptomLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at', 'pain_level', 'headache_intensity', 'pain_location')
+    list_filter = ('created_at',)
+    search_fields = ('user__username', 'pain_location', 'digestion_notes', 'notes')
+    date_hierarchy = 'created_at'
+
+
+@admin.register(HabitLog)
+class HabitLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'date', 'water_ml', 'caffeine_servings', 'alcohol_servings')
+    list_filter = ('date',)
+    search_fields = ('user__username', 'medication_and_supplements', 'notes')
+    date_hierarchy = 'date'
+
+
+@admin.register(WellbeingLog)
+class WellbeingLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'date', 'mindfulness_minutes', 'time_outdoors_minutes')
+    list_filter = ('date',)
+    search_fields = ('user__username', 'notes')
+    date_hierarchy = 'date'
