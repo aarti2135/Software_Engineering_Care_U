@@ -32,6 +32,12 @@ urlpatterns = [
     # Django REST Framework browsable API auth
     path('api-auth/', include('rest_framework.urls')),
 
+<<<<<<< HEAD
+=======
+    # Proactive_health data
+    path('', include('proactive_feat.urls')),
+
+>>>>>>> 816e25b (Implement proactive health monitoring)
     # User login / logout / signup (with namespace)
     path(
         'accounts/',

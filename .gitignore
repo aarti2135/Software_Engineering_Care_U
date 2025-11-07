@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # IDE
 .idea/
 *.iml
@@ -25,3 +26,29 @@ __pycache__/
 db.sqlite3
 *.sqlite3
 
+=======
+# Python bytecode & cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual env
+.venv/
+
+# Django DB & generated files
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+
+# Env / secrets
+.env
+.env.*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+>>>>>>> 816e25b (Implement proactive health monitoring)
