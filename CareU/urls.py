@@ -3,6 +3,46 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 
+def home_redirect(request):
+    """
+    Redirect the root URL depending on authentication:
+      - If logged in  → go to the nutrition dashboard
+      - If anonymous  → go to login page
+    """
+    if request.user.is_authenticated:
+        return redirect('nutrition_dashboard')  # Must exist in healthdata.urls
+    else:
+        return redirect('User_Login:login')  # Namespaced login route
+
+urlpatterns = [
+    # Root redirect (home)
+    path('', home_redirect, name='home'),
+
+    # Admin
+    path('admin/', admin.site.urls),
+
+    # Consent-related URLs (module must define `urlpatterns`)
+    path('', include('usermanagement.views.consent_urls')),
+
+    # Health / API routes (nutrition dashboard, etc.)
+    path('api/', include('healthdata.urls')),
+
+    # DRF login/logout for browsable API
+    path('api-auth/', include('rest_framework.urls')),
+
+    # Proactive Health feature routes
+    path('', include('proactive_feat.urls')),
+
+    # User login / logout / signup (namespaced)
+    path(
+        'accounts/',
+        include(('User_Login.urls', 'User_Login'), namespace='User_Login'),
+    ),
+]
+# CareU/urls.py
+from django.contrib import admin
+from django.urls import path, include
+from django.shortcuts import redirect
 
 def home_redirect(request):
     """
@@ -15,30 +55,26 @@ def home_redirect(request):
     else:
         return redirect('User_Login:login')  # Namespaced login route
 
-
 urlpatterns = [
     # Root redirect (home)
     path('', home_redirect, name='home'),
 
-    # Admin panel
+    # Admin
     path('admin/', admin.site.urls),
 
-    # Consent-related URLs (from usermanagement/views/consent_urls.py)
+    # Consent-related URLs (module must define `urlpatterns`)
     path('', include('usermanagement.views.consent_urls')),
 
     # Health / API routes (nutrition dashboard, etc.)
     path('api/', include('healthdata.urls')),
 
-    # Django REST Framework browsable API auth
+    # DRF login/logout for browsable API
     path('api-auth/', include('rest_framework.urls')),
 
-<<<<<<< HEAD
-=======
-    # Proactive_health data
+    # Proactive Health feature routes
     path('', include('proactive_feat.urls')),
 
->>>>>>> 816e25b (Implement proactive health monitoring)
-    # User login / logout / signup (with namespace)
+    # User login / logout / signup (namespaced)
     path(
         'accounts/',
         include(('User_Login.urls', 'User_Login'), namespace='User_Login'),

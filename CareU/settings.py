@@ -27,14 +27,12 @@ INSTALLED_APPS = [
     'usermanagement.apps.UsermanagementConfig',
     'healthdata',
     'User_Login',
-<<<<<<< HEAD
-=======
     'proactive_feat',
->>>>>>> 816e25b (Implement proactive health monitoring)
 
     # Third-party
     'rest_framework',
 ]
+
 
 # --------------------------------------------------------------------------------------
 # Middleware
