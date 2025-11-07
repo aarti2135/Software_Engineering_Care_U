@@ -23,7 +23,7 @@ urlpatterns = [
     # Admin panel
     path('admin/', admin.site.urls),
 
-    # Consent-related URLs (from usermanagement/views/consent_urls.py)
+    # Consent-related URLs (module must define `urlpatterns`)
     path('', include('usermanagement.views.consent_urls')),
 
     # Health / API routes (nutrition dashboard, etc.)
@@ -32,12 +32,9 @@ urlpatterns = [
     # Django REST Framework browsable API auth
     path('api-auth/', include('rest_framework.urls')),
 
-<<<<<<< HEAD
-=======
-    # Proactive_health data
+    # Proactive Health feature routes (module must define `urlpatterns`)
     path('', include('proactive_feat.urls')),
 
->>>>>>> 816e25b (Implement proactive health monitoring)
     # User login / logout / signup (with namespace)
     path(
         'accounts/',
