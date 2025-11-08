@@ -1,0 +1,241 @@
+{% load static %}
+<style>
+  /* ===== Proactive Bell (scoped) ===== */
+  .probell { --bg:#111827; --ring:#0ea5e9; --card:#ffffff; --muted:#6b7280; --line:#eef2f7; --shadow:0 14px 32px rgba(0,0,0,.16); }
+  .probell * { box-sizing: border-box; }
+
+  /* Floating button */
+  #pb-btn {
+    position: fixed; right: 20px; bottom: 20px; z-index: 1060;
+    border: 0; border-radius: 999px; padding: 10px 14px;
+    background: radial-gradient(120% 120% at 100% 0, var(--ring), #6366f1 50%, var(--bg) 80%);
+    color: #fff; font-weight: 600; display: inline-flex; align-items: center; gap: 10px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.22); cursor: pointer; transition: transform .12s ease;
+  }
+  #pb-btn:hover { transform: translateY(-2px); }
+  #pb-btn .dot {
+    width: 10px; height: 10px; border-radius: 999px; background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,.6);
+    animation: pb-ping 1.8s infinite;
+  }
+  @keyframes pb-ping { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.6) } 70% { box-shadow: 0 0 0 10px rgba(34,197,94,0) } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0) } }
+  #pb-count { background:#fff; color:#111827; font-weight:700; border-radius:10px; padding:2px 8px; }
+
+  /* Dropdown panel */
+  #pb-menu {
+    position: fixed; right: 20px; bottom: 84px; width: 360px; max-height: 72vh; overflow: hidden;
+    display: none; z-index: 1060; background: rgba(255,255,255,.88);
+    backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+  }
+  #pb-menu.pb-open { display: block; animation: pb-fade .18s ease; }
+  @keyframes pb-fade { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: translateY(0) } }
+
+  .pb-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); }
+  .pb-title { display:flex; align-items:center; gap:8px; font-weight:700; }
+  .pb-actions { display:flex; gap:8px; }
+  .pb-btn-sm { border:1px solid var(--line); background:#fff; color:#111827; border-radius:10px; padding:6px 10px; font-size:.85rem; }
+  .pb-btn-sm:hover { background:#f9fafb; }
+
+  .pb-body { padding:0; }
+  .pb-list { list-style:none; margin:0; padding:0; max-height: 60vh; overflow:auto; }
+  .pb-item { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-bottom:1px solid var(--line); background:#fff; }
+  .pb-item:last-child { border-bottom:0; }
+  .pb-chip { flex:0 0 auto; font-size:11px; padding:3px 8px; border-radius:999px; }
+  .pb-chip.abn { background:#fee2e2; color:#991b1b; }
+  .pb-chip.mis { background:#fef3c7; color:#92400e; }
+  .pb-chip.trn { background:#dbeafe; color:#1e3a8a; }
+
+  .pb-main { flex:1 1 auto; min-width:0; }
+  .pb-msg { font-weight:600; line-height:1.25; }
+  .pb-meta { color:var(--muted); font-size:.84rem; margin-top:2px; }
+
+  .pb-right { flex:0 0 auto; }
+  .pb-mark { border:0; background:#111827; color:#fff; border-radius:10px; padding:6px 10px; font-size:.85rem; }
+  .pb-mark:hover { filter: brightness(1.1); }
+
+  .pb-empty { text-align:center; padding:24px 16px; }
+  .pb-empty .emo { font-size:2rem; opacity:.35; }
+  .pb-empty p { color:var(--muted); margin:6px 0 0 0; }
+
+  .pb-foot { padding:10px 12px; border-top:1px solid var(--line); background:#fff; display:flex; justify-content:space-between; align-items:center; }
+  .pb-link { text-decoration:none; }
+  .pb-link .go { border:1px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; }
+  .pb-muted { color:var(--muted); font-size:.85rem; }
+</style>
+
+<!-- Floating bell -->
+<button id="pb-btn" class="probell" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="pb-menu">
+  <span class="dot" aria-hidden="true"></span>
+  🔔 <span id="pb-count">0</span>
+</button>
+
+<!-- Dropdown -->
+<section id="pb-menu" class="probell" role="dialog" aria-label="Proactive Alerts" aria-modal="false">
+  <header class="pb-head">
+    <div class="pb-title">Alerts <span class="pb-muted" id="pb-sub">loading…</span></div>
+    <div class="pb-actions">
+      <button class="pb-btn-sm" id="pb-refresh" type="button">Refresh</button>
+      <button class="pb-btn-sm" id="pb-markall" type="button">Mark all read</button>
+    </div>
+  </header>
+
+  <div class="pb-body" id="pb-body">
+    <ul class="pb-list" id="pb-list">
+      <!-- skeleton rows -->
+      <li class="pb-item"><span class="pb-chip" style="background:#f3f4f6;color:#9ca3af;">...</span><div class="pb-main"><div class="pb-msg">Loading…</div><div class="pb-meta">Please wait</div></div></li>
+      <li class="pb-item"><span class="pb-chip" style="background:#f3f4f6;color:#9ca3af;">...</span><div class="pb-main"><div class="pb-msg">Loading…</div><div class="pb-meta">Please wait</div></div></li>
+    </ul>
+  </div>
+
+  <footer class="pb-foot">
+    <span class="pb-muted">Stay proactive 🚀</span>
+    <a class="pb-link" href="{% url 'pro_alerts_list' %}"><span class="go">Open alerts page</span></a>
+  </footer>
+</section>
+
+<script src="{% static 'proactive_feat/alerts.js' %}"></script>
+<script>
+(function(){
+  const btn = document.getElementById('pb-btn');
+  const menu = document.getElementById('pb-menu');
+  const list = document.getElementById('pb-list');
+  const sub  = document.getElementById('pb-sub');
+  const countEl = document.getElementById('pb-count');
+  const refreshBtn = document.getElementById('pb-refresh');
+  const markAllBtn = document.getElementById('pb-markall');
+
+  if (!btn || !menu) return;
+
+  /* --- helpers --- */
+  const chip = (t) => t==='threshold' ? '<span class="pb-chip abn">Abnormal</span>'
+                 : t==='missed_log' ? '<span class="pb-chip mis">Missed</span>'
+                 : '<span class="pb-chip trn">Trend</span>';
+  const tstr = (iso) => {
+    try { return new Date(iso).toLocaleString(); } catch(e){ return ''; }
+  };
+
+  let cache = [];
+  let open = false;
+
+  function setOpen(v){
+    open = !!v;
+    btn.setAttribute('aria-expanded', open);
+    if (open) {
+      menu.classList.add('pb-open');
+      document.addEventListener('keydown', onKey);
+      document.addEventListener('click', onOutside, {capture:true});
+    } else {
+      menu.classList.remove('pb-open');
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('click', onOutside, {capture:true});
+    }
+  }
+  function onKey(e){ if (e.key === 'Escape') setOpen(false); }
+  function onOutside(e){
+    if (!menu.contains(e.target) && e.target !== btn) setOpen(false);
+  }
+
+  btn.addEventListener('click', ()=> setOpen(!open));
+
+  async function hydrate(){
+    try{
+      sub.textContent = 'loading…';
+      const res = await fetch('/proactive/alerts/json', {credentials:'same-origin'});
+      if (!res.ok) throw new Error('Load failed');
+      cache = await res.json();
+      render(cache);
+    }catch(e){
+      list.innerHTML = '<li class="pb-item"><div class="pb-main"><div class="pb-msg">Couldn’t load alerts</div><div class="pb-meta">Try again</div></div></li>';
+      sub.textContent = 'error';
+      console.error(e);
+    }
+  }
+
+  function render(data){
+    const unread = data.filter(a => !a.is_read).length;
+    const today = new Date().toISOString().slice(0,10);
+    const todayCnt = data.filter(a => (a.created_at||'').slice(0,10) === today).length;
+
+    countEl.textContent = unread;
+    btn.querySelector('.dot').style.background = unread ? '#22c55e' : '#9ca3af';
+    sub.textContent = `${todayCnt} today · ${unread} unread`;
+
+    if (!Array.isArray(data) || data.length === 0){
+      list.innerHTML = `
+        <div class="pb-empty">
+          <div class="emo">✨</div>
+          <p>No alerts right now. You’re all good!</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = data.slice(0, 12).map(a => `
+      <li class="pb-item" data-id="${a.id}">
+        ${chip(a.alert_type)}
+        <div class="pb-main">
+          <div class="pb-msg">${a.message}</div>
+          <div class="pb-meta">${tstr(a.created_at)}</div>
+        </div>
+        <div class="pb-right">
+          ${a.is_read ? '' : `<button class="pb-mark" data-mark="${a.id}" type="button">Mark read</button>`}
+        </div>
+      </li>
+    `).join('');
+  }
+
+  // mark one
+  list.addEventListener('click', async (e)=>{
+    const id = e.target.getAttribute('data-mark');
+    if (!id) return;
+    try{
+      const res = await fetch(`/proactive/alerts/mark-read/${id}/`, {credentials:'same-origin'});
+      const j = await res.json();
+      if (j && j.ok){
+        const idx = cache.findIndex(x => String(x.id) === String(id));
+        if (idx >= 0) cache[idx].is_read = true;
+        render(cache);
+        toast('Marked as read');
+      }
+    }catch(err){ console.error(err); }
+  });
+
+  // mark all
+  markAllBtn.addEventListener('click', async ()=>{
+    const toMark = cache.filter(a => !a.is_read).map(a => a.id);
+    if (!toMark.length) return;
+    for (const id of toMark){
+      try { await fetch(`/proactive/alerts/mark-read/${id}/`, {credentials:'same-origin'}); }
+      catch(e){ /* ignore individual failures */ }
+    }
+    cache = cache.map(a => ({...a, is_read:true}));
+    render(cache);
+    toast('All caught up!');
+  });
+
+  refreshBtn.addEventListener('click', hydrate);
+
+  function toast(msg){
+    let t = document.getElementById('pro-toast');
+    if (!t){
+      t = document.createElement('div');
+      t.id = 'pro-toast';
+      t.style.position = 'fixed';
+      t.style.right = '20px';
+      t.style.bottom = '20px';
+      t.style.background = '#111827';
+      t.style.color = '#fff';
+      t.style.padding = '10px 14px';
+      t.style.borderRadius = '10px';
+      t.style.boxShadow = '0 10px 24px rgba(0,0,0,.22)';
+      t.style.zIndex = '1060';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(()=> t.style.display='none', 1400);
+  }
+
+  // initial load + periodic gentle refresh (every 60s)
+  hydrate();
+  setInterval(hydrate, 60000);
+})();
+</script>

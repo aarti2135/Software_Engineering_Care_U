@@ -1,0 +1,67 @@
+# proactive_feat/views.py
+from urllib.parse import urlsplit, urlunsplit
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
+from django.views.decorators.http import require_http_methods
+
+from .forms import VitalForm
+
+
+def _safe_next_url(request, candidate: str | None, *, fallback: str) -> str:
+    """
+    Return a redirect URL that is guaranteed to be safe for this host.
+    Preserves fragments (e.g., '#pro-vitals') if provided.
+    """
+    if not candidate:
+        return fallback
+
+    parts = urlsplit(candidate)
+    # Reject non-http(s) schemes or cross-host links
+    if parts.scheme and parts.scheme not in ("http", "https"):
+        return fallback
+    if parts.netloc and parts.netloc != request.get_host():
+        return fallback
+
+    # Rebuild path?query#fragment to keep anchors
+    rebuilt = urlunsplit(("", "", parts.path or "/", parts.query, parts.fragment))
+    if url_has_allowed_host_and_scheme(rebuilt, allowed_hosts={request.get_host()}):
+        return rebuilt
+    return fallback
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def pro_vital_form(request):
+    """
+    Create a Vital and redirect back to the Nutrition dashboard
+    (or a safe 'next' URL), keeping the '#pro-vitals' anchor by default.
+    """
+    default_next = f"{reverse('nutrition_dashboard')}#pro-vitals"
+
+    if request.method == "POST":
+        form = VitalForm(request.POST)
+        if form.is_valid():
+            vital = form.save(commit=False)
+            vital.user = request.user
+            vital.save()
+
+            messages.success(request, "Vital saved successfully.")
+
+            # Prefer explicit 'next', then ?next=…, then Referer, else dashboard
+            raw_next = (
+                request.POST.get("next")
+                or request.GET.get("next")
+                or request.META.get("HTTP_REFERER")
+            )
+            next_url = _safe_next_url(request, raw_next, fallback=default_next)
+            return redirect(next_url)
+    else:
+        # Provide a sensible default timestamp so the widget isn't empty
+        form = VitalForm(initial={"measured_at": now()})
+
+    return render(request, "proactive_feat/vitals_form.html", {"form": form})
