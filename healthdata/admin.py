@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     NutritionEntry, HealthReminder, ActivityData, SleepData, HealthMetrics,
     GlucoseEntry, MedicationEntry, DoctorNote,
-    VitalLog, MoodLog, SymptomLog, HabitLog, WellbeingLog
+    VitalLog, MoodLog, SymptomLog, HabitLog, WellbeingLog,
+    Goal, GoalProgressLog
 )
 
 
@@ -140,3 +141,14 @@ class WellbeingLogAdmin(admin.ModelAdmin):
     list_filter = ('date',)
     search_fields = ('user__username', 'notes')
     date_hierarchy = 'date'
+
+@admin.register(Goal)
+class GoalAdmin(admin.ModelAdmin):
+    list_display = ("user", "title", "goal_type", "frequency", "target_value", "current_value", "status", "due_date", "updated_at")
+    list_filter = ("goal_type", "frequency", "status")
+    search_fields = ("title", "user__username")
+
+@admin.register(GoalProgressLog)
+class GoalProgressLogAdmin(admin.ModelAdmin):
+    list_display = ("goal", "applied_on", "delta_value", "source", "created_at")
+    list_filter = ("applied_on", "source")

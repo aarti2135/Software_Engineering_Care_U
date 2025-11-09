@@ -9,27 +9,31 @@ from usermanagement.forms import SignupForm
 
 class UserLoginView(LoginView):
     """
-    Login page using the blue gradient template located at templates/careu/login.html.
-    Redirects authenticated users straight to the dashboard.
+    Displays the login form and logs the user in.
+    After successful login → redirect to Home Dashboard (/dashboard/).
+    If already authenticated → redirect directly to dashboard.
     """
-    template_name = "careu/login.html"
-    redirect_authenticated_user = True
+    #  Use your correct template path
+    template_name = "User_Login/login.html"
 
+    #  Show login form even if user is already authenticated (so no auto redirect)
+    redirect_authenticated_user = False
+
+    #  Default redirect destination after login (if no ?next= param)
+    success_url = reverse_lazy("dashboard")  # make sure 'dashboard' exists in healthdata/urls.py
+
+    #  If ?next= is provided, Django handles it automatically; otherwise, fallback:
     def get_success_url(self):
-        """
-        After successful login, redirect the user to the nutrition dashboard.
-        """
-        return reverse_lazy("nutrition_dashboard")
+        return self.get_redirect_url() or reverse_lazy("dashboard")
 
 
 def logout_view(request):
     """
-    Logs out the user safely using GET or POST and redirects to the login page.
-    Also displays a confirmation message.
+    Logs out the user and redirects to the login page.
     """
     logout(request)
     messages.success(request, "You have been logged out successfully.")
-    # ✅ Use namespaced URL to avoid NoReverseMatch
+    #  Use namespaced URL to avoid NoReverseMatch
     return redirect(reverse_lazy("User_Login:login"))
 
 
@@ -41,12 +45,11 @@ def signup_view(request):
     if request.method == "POST":
         form = SignupForm(request.POST)
         if form.is_valid():
-            user = form.save()  # Creates the user instance (profile via signals if any)
+            form.save()
             messages.success(request, "Account created successfully! You can now log in.")
-            # ✅ Use namespaced URL here too
             return redirect("User_Login:login")
     else:
         form = SignupForm()
 
-    # ✅ Make sure this template exists: templates/User_Login/signup.html
+    #  Template must exist: templates/User_Login/signup.html
     return render(request, "User_Login/signup.html", {"form": form})

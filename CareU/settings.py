@@ -124,11 +124,17 @@ REST_FRAMEWORK = {
     ],
 }
 
-# --------------------------------------------------------------------------------------
+# --------------------------------------------------------
 # Authentication redirects
-# --------------------------------------------------------------------------------------
-LOGIN_URL = '/accounts/login/'
-# If you prefer to always land on dashboard after login, set the next line to:
+# --------------------------------------------------------
+#LOGIN_URL = '/accounts/login/'
 # LOGIN_REDIRECT_URL = '/api/dashboard/nutrition/'
-LOGIN_REDIRECT_URL = '/accounts/login/'
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+#LOGIN_REDIRECT_URL = '/dashboard/'      #  Redirects to Home Dashboard
+#LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# ---------------------------------------------------------
+# Authentication redirects
+# ---------------------------------------------------------
+LOGIN_URL = 'User_Login:login'             # namespaced login view
+LOGIN_REDIRECT_URL = 'dashboard'           # healthdata home dashboard
+LOGOUT_REDIRECT_URL = 'User_Login:login'   # redirect back to login after logout

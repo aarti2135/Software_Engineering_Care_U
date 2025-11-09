@@ -6,38 +6,38 @@ from django.shortcuts import redirect
 
 def home_redirect(request):
     """
-    Redirect the root URL depending on authentication:
-      - If logged in  → go to the nutrition dashboard
-      - If anonymous  → go to login page
+    Root redirect:
+    - Authenticated users → dashboard
+    - Anonymous users → login
     """
     if request.user.is_authenticated:
-        return redirect('nutrition_dashboard')  # Must exist in healthdata.urls
+        return redirect('dashboard')
     else:
-        return redirect('User_Login:login')  # Namespaced login route
+        return redirect('User_Login:login')
 
 
 urlpatterns = [
-    # Root redirect (home)
+    # Root redirect
     path('', home_redirect, name='home'),
 
-    # Admin panel
+    # Admin site
     path('admin/', admin.site.urls),
 
-    # Consent-related URLs (module must define `urlpatterns`)
-    path('', include('usermanagement.views.consent_urls')),
+    # ✅ Healthdata (nutrition, goals, reminders, etc.)
+    path('dashboard/', include('healthdata.urls')),  # ✅ add "dashboard/" prefix here
 
-    # Health / API routes (nutrition dashboard, etc.)
-    path('api/', include('healthdata.urls')),
+    # ✅ Proactive / AI features
+    path('proactive/', include('proactive_feat.urls')),
 
-    # Django REST Framework browsable API auth
-    path('api-auth/', include('rest_framework.urls')),
+    # ✅ User management (consent, provider alerts)
+    path('user/', include('usermanagement.urls')),
 
-    # Proactive Health feature routes (module must define `urlpatterns`)
-    path('', include('proactive_feat.urls')),
-
-    # User login / logout / signup (with namespace)
+    # ✅ Authentication (login, logout, signup)
     path(
         'accounts/',
         include(('User_Login.urls', 'User_Login'), namespace='User_Login'),
     ),
+
+    # ✅ Django REST Framework browsable API auth
+    path('api-auth/', include('rest_framework.urls')),
 ]
