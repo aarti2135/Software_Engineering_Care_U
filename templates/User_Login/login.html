@@ -93,14 +93,19 @@
 <body>
     <div class="container">
         <h2>Welcome to CareU</h2>
-        <form method="POST">
+
+        <!-- Login form -->
+        <form method="POST" action="{% url 'User_Login:login' %}">
             {% csrf_token %}
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
+
+        <!-- Signup link -->
         <div class="signup">
-            Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
+            Don't have an account?
+            <a href="{% url 'User_Login:signup' %}">Sign up</a>
         </div>
     </div>
 </body>

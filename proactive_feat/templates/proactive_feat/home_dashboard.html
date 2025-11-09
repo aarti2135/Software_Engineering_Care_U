@@ -1,0 +1,236 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap & Fonts -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #F2F2F7;
+      color: #1C1C1E;
+      margin: 0;
+    }
+
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 80px 1fr 300px;
+      min-height: 100vh;
+    }
+
+    .sidebar-left {
+      background: #fff;
+      border-right: 1px solid #E5E5EA;
+      padding: 2rem 0;
+      position: fixed;
+      width: 80px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-top, .nav-bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      color: #8E8E93;
+      transition: all 0.2s ease;
+      font-size: 20px;
+    }
+    .nav-icon:hover, .nav-icon.active {
+      background: #007AFF;
+      color: white;
+    }
+
+    .main-content {
+      grid-column: 2;
+      padding: 2rem;
+      margin-left: 80px;
+    }
+
+    .card-metric {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 2rem;
+    }
+
+    .chart-container {
+      width: 180px;
+      height: 180px;
+      margin: auto;
+    }
+
+    .btn-nav {
+      border-radius: 12px;
+      padding: 1rem;
+      font-weight: 500;
+      display: block;
+      background: #fff;
+      text-decoration: none;
+      color: #1C1C1E;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+    .btn-nav:hover {
+      background: #007AFF;
+      color: white;
+    }
+
+    a.latest-goal-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .latest-goal-card:hover {
+      background: #F8F9FF;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+<div class="dashboard-container">
+
+  <!-- Sidebar -->
+  <nav class="sidebar-left">
+    <div class="nav-top">
+      <!-- Avatar -->
+      <div class="user-avatar mb-3" style="background:linear-gradient(135deg,#007AFF,#5856D6);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;">
+        {{ request.user.username|first|upper }}
+      </div>
+
+      <!-- Navigation Icons -->
+      <a href="{% url 'dashboard' %}" class="nav-icon active" title="Home">🏠</a>
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" title="Nutrition">🍎</a>
+      <!-- ✅ Updated Goals link -->
+      <a href="{% url 'goal_dashboard' %}" class="nav-icon" title="Goals">🎯</a>
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon" title="Reminders">🔔</a>
+      <a href="{% url 'pro_launcher' %}" class="nav-icon" title="AI Assistant">🤖</a>
+    </div>
+
+    <!-- Bottom: Profile + Logout -->
+    <div class="nav-bottom mb-3">
+      <a href="{% url 'User_Login:logout' %}" class="nav-icon" title="Logout">🚪</a>
+      <a href="{% url 'usermanagement:provider_alerts' %}" class="nav-icon" title="Profile">👤</a>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main-content">
+    <h3 class="fw-semibold mb-4">Welcome back, {{ request.user.username|title }} 👋</h3>
+
+    <div class="row g-4">
+      <!-- Steps Chart -->
+      <div class="col-md-6">
+        <div class="card-metric">
+          <h5>Steps Today</h5>
+          <div class="chart-container">
+            <canvas id="stepsChart"></canvas>
+          </div>
+          <p class="mt-3 fw-semibold text-primary">{{ steps|default:0 }} steps</p>
+        </div>
+      </div>
+
+      <!-- Heart Rate Chart -->
+      <div class="col-md-6">
+        <div class="card-metric">
+          <h5>Heart Rate</h5>
+          <div class="chart-container">
+            <canvas id="heartChart"></canvas>
+          </div>
+          <p class="mt-3 fw-semibold text-danger">{{ heart_rate|default:0 }} bpm</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Latest Goal (Clickable) -->
+    <a href="{% url 'goal_dashboard' %}" class="latest-goal-link">
+      <div class="card-metric latest-goal-card">
+        <h5>Latest Goal</h5>
+        {% if goal %}
+          <p class="mb-1"><strong>{{ goal.title }}</strong></p>
+          <small>{{ goal.notes|default:"No description available." }}</small>
+        {% else %}
+          <p class="text-muted mb-0">No goals yet. Click here to create one!</p>
+        {% endif %}
+      </div>
+    </a>
+
+    <!-- Quick Access -->
+    <div class="mt-4">
+      <h5 class="mb-3">Quick Access</h5>
+      <a href="{% url 'nutrition_dashboard' %}" class="btn-nav">🍎 Nutrition Dashboard</a>
+      <!-- ✅ Updated Goal link -->
+      <a href="{% url 'goal_dashboard' %}" class="btn-nav">🎯 Goals</a>
+      <a href="{% url 'reminders_dashboard' %}" class="btn-nav">🔔 Reminders</a>
+      <a href="{% url 'pro_launcher' %}" class="btn-nav">🤖 AI & Proactive Health</a>
+    </div>
+  </main>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const steps = {{ steps|default:0 }};
+  const stepsGoal = 10000;
+  const stepsPercent = Math.min(steps / stepsGoal * 100, 100);
+
+  new Chart(document.getElementById('stepsChart'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [stepsPercent, 100 - stepsPercent],
+        backgroundColor: ['#34C759', '#E5E5EA'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '80%',
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  const heartRate = {{ heart_rate|default:0 }};
+  new Chart(document.getElementById('heartChart'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [heartRate, 120 - heartRate],
+        backgroundColor: ['#FF3B30', '#E5E5EA'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '80%',
+      plugins: { legend: { display: false } }
+    }
+  });
+</script>
+</body>
+</html>

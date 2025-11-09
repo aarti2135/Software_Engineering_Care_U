@@ -94,3 +94,27 @@ def launcher(request):
         "proactive_feat/launcher.html",
         {"DASHBOARD_URL": DASHBOARD_URL},  # ensure available
     )
+
+# ---------- Home Dashboard ----------
+@login_required
+def home_dashboard(request):
+    """
+    Displays the main home dashboard with user info,
+    steps, heart rate, and latest goal.
+    """
+    # Example placeholder values — will connect later to real data
+    user_name = request.user.username
+    steps = 6980  # link later to ActivityData model
+    heart_rate = 78  # link later to HealthMetrics model
+    goal = {
+        'title': 'Walk 10,000 steps daily',
+        'description': 'Maintain a consistent walking habit to improve stamina and overall health.'
+    }
+
+    return render(request, 'proactive_feat/home_dashboard.html', {
+        'user_name': user_name,
+        'steps': steps,
+        'heart_rate': heart_rate,
+        'goal': goal,
+        "DASHBOARD_URL": DASHBOARD_URL,  # reuse variable for navigation
+    })

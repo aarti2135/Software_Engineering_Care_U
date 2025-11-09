@@ -1,151 +1,121 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Provider Alerts • Care U</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body { background:#f6f8fb; }
-    .card    { border:0; border-radius:16px; box-shadow:0 10px 22px rgba(20,40,80,.06); }
-    .chip    { display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .6rem; border-radius:999px; font-weight:600; font-size:.8rem; }
-    .chip-low       { background:#e8f5e9; color:#1b5e20; }
-    .chip-moderate  { background:#fff3cd; color:#7a5e00; }
-    .chip-high      { background:#fdecea; color:#b71c1c; }
-    .chip-critical  { background:#fde2e1; color:#8a1010; border:1px solid #f5b5b2; }
-    .muted-pill { background:#fff; border-radius:12px; padding:.35rem .6rem; box-shadow:0 4px 14px rgba(20,40,80,.06); }
-    .icon { width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; }
-    .empty { color:#6c757d; }
-    .btn-soft { border-radius:12px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Provider Alerts · Care U</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f6f8fb;
+            color: #1c1c1e;
+        }
+        .navbar {
+            background: #0d6efd;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .navbar-brand { font-weight: 700; color: white !important; }
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+            background: white;
+        }
+        .alert-card {
+            border-left: 5px solid #0d6efd;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+        .alert-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        .alert-high { border-left-color: #dc3545; }
+        .alert-medium { border-left-color: #ffc107; }
+        .alert-low { border-left-color: #198754; }
+        .btn-run {
+            border-radius: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Top bar (keeps the look close to your dashboard) -->
-<nav class="navbar navbar-dark bg-dark mb-4">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="{% url 'nutrition_dashboard' %}">Care U</a>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a href="{% url 'home_dashboard' %}" class="navbar-brand">Care U</a>
+
     <div class="ms-auto d-flex align-items-center gap-2">
-      <a class="btn btn-sm btn-outline-light btn-soft" href="{% url 'nutrition_dashboard' %}">⬅ Back to Dashboard</a>
-      <a class="btn btn-sm btn-outline-info btn-soft" href="{% url 'consent' %}">Consent</a>
-      <span class="text-white-50 small">Signed in as <strong class="text-white">{{ request.user.username }}</strong></span>
+        <a href="{% url 'nutrition_dashboard' %}" class="btn btn-light btn-sm">Back to Dashboard</a>
+        <a href="{% url 'usermanagement:consent' %}" class="btn btn-outline-light btn-sm">Consent</a>
+        <span class="text-white-50 small ms-2">Signed in as <strong>{{ request.user.username }}</strong></span>
     </div>
   </div>
 </nav>
 
-<div class="container">
-
-  <!-- Header / Actions -->
-  <div class="card mb-3">
-    <div class="card-body d-flex flex-wrap gap-3 align-items-center justify-content-between">
-      <div>
-        <h4 class="mb-1">Provider Alerts</h4>
-        <div class="text-muted">AI-assisted flags and safe recommendations</div>
-      </div>
-
-      <div class="d-flex gap-2">
-        <!-- Run AI now (POST to this page) -->
-        <form method="post" class="d-inline">
-          {% csrf_token %}
-          <input type="hidden" name="run_ai" value="1">
-          <button class="btn btn-primary btn-soft">
-            ⚙️ Run AI Now
-          </button>
-        </form>
-
-        <!-- Request patient data (consent-aware) -->
-        {% url 'request_data_sharing' as req_share_url %}
-        {% if req_share_url %}
-          <form method="post" action="{{ req_share_url }}" class="d-inline">
+<!-- Main Content -->
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">Provider Alerts</h3>
+            <div class="text-muted">AI-assisted health insights and recommendations</div>
+        </div>
+        <form method="post" style="margin: 0;">
             {% csrf_token %}
-            <button class="btn btn-outline-secondary btn-soft">
-              🔗 Request Patient Data
+            <button type="submit" class="btn btn-primary btn-run">
+                ⚙️ Run AI Now
             </button>
-          </form>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <!-- Flash messages -->
-  {% if messages %}
-    <div class="mb-3">
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} mb-2" style="border-radius:12px; border:0; box-shadow:0 6px 16px rgba(20,40,80,.06);">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <!-- Alerts list -->
-  {% if alerts %}
-    {% for a in alerts %}
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="d-flex align-items-start justify-content-between gap-3">
-            <div>
-              <h5 class="mb-2">
-                {{ a.alert_type }}
-                {% if a.severity == 'critical' %}
-                  <span class="chip chip-critical">Critical</span>
-                {% elif a.severity == 'high' %}
-                  <span class="chip chip-high">High</span>
-                {% elif a.severity == 'moderate' %}
-                  <span class="chip chip-moderate">Moderate</span>
-                {% else %}
-                  <span class="chip chip-low">Low</span>
-                {% endif %}
-              </h5>
-
-              <p class="mb-2">{{ a.message }}</p>
-
-              {% if a.explanation %}
-                <div class="small text-muted mb-2">
-                  <span class="icon">ℹ️</span>
-                  <strong>Why flagged:</strong> {{ a.explanation }}
-                </div>
-              {% endif %}
-
-              {% if a.recommendation %}
-                <div class="mt-3 p-3 bg-light rounded" style="border:1px dashed #d0d7de;">
-                  <strong>Recommendation:</strong>
-                  <div class="mt-1">{{ a.recommendation }}</div>
-                </div>
-              {% endif %}
-            </div>
-
-            <div class="text-end">
-              <div class="muted-pill">
-                Created: <strong>{{ a.created_at|date:"Y-m-d H:i" }}</strong>
-              </div>
-              {% if a.reviewed %}
-                <div class="small text-success mt-2">✓ Reviewed</div>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-  {% else %}
-    <!-- Empty state -->
-    <div class="card">
-      <div class="card-body text-center py-5">
-        <div class="display-6 mb-2">✅</div>
-        <h5 class="mb-1">No alerts right now</h5>
-        <p class="empty mb-4">Click <em>Run AI Now</em> to analyze the latest data.</p>
-        <form method="post" class="d-inline">
-          {% csrf_token %}
-          <input type="hidden" name="run_ai" value="1">
-          <button class="btn btn-primary btn-soft">⚙️ Run AI Now</button>
         </form>
-      </div>
     </div>
-  {% endif %}
 
-  <div class="text-center my-4">
-    <a href="{% url 'nutrition_dashboard' %}" class="btn btn-outline-dark btn-soft">⬅ Back to Dashboard</a>
-  </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} mb-3">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if alerts %}
+        {% for alert in alerts %}
+            <div class="alert-card alert-{{ alert.priority|default:'medium' }}">
+                <h5 class="fw-semibold mb-1">{{ alert.title|default:"Health Alert" }}</h5>
+                <p class="mb-1 text-muted">{{ alert.message|default:"No details available." }}</p>
+                <div class="small text-secondary">
+                    Created on: {{ alert.created_at|date:"Y-m-d H:i" }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i>✅</i>
+            <h5>No alerts right now</h5>
+            <p class="text-muted mb-0">Click “Run AI Now” to analyze the latest data.</p>
+        </div>
+    {% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

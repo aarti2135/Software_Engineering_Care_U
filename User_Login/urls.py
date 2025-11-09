@@ -2,16 +2,16 @@
 from django.urls import path
 from .views import UserLoginView, logout_view, signup_view
 
-# Define the app namespace so you can reference these URLs safely from templates
+#  Namespace allows safe reverse lookups:  {% url 'User_Login:login' %}
 app_name = "User_Login"
 
 urlpatterns = [
-    # Login page (blue theme)
+    #  Login page (renders the blue-gradient login form)
     path("login/", UserLoginView.as_view(), name="login"),
 
-    # Logout view (GET-safe, redirects to login page)
+    #  Logout view (handles GET or POST, redirects to login page)
     path("logout/", logout_view, name="logout"),
 
-    # Signup page (new user registration)
+    #  Signup page (new user registration form)
     path("signup/", signup_view, name="signup"),
 ]
