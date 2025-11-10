@@ -46,38 +46,16 @@ care_u/
 ├── manage.py
 └── db.sqlite3
 
+## 🧪 API Endpoints
+Endpoint	Method	Description
+/analytics/	GET	Renders Analytics Dashboard
+/analytics/charts/data/?days=14	GET	Returns JSON containing glucose, sleep, and step data
+/analytics/insights/	GET	Displays health highlights (e.g., low sleep, high glucose)
+/analytics/insights/fragment/	GET	Partial template rendering for dashboard widgets
+/analytics/insights/dismiss/	POST	Dismisses a highlight for 48 hours
 
 
-## ⚙️ Installation & Setup
-
-### 1️⃣ Clone the repository
-```bash
-git clone https://github.com/<your-username>/CareU.git
-cd CareU
-
-### 2️⃣ Create a virtual environment
-python -m venv .venv
-.venv\Scripts\activate   # Windows
-# or
-source .venv/bin/activate   # macOS/Linux
-
-### 3️⃣ Install dependencies
-pip install -r requirements.txt
-
-### 4️⃣ Apply migrations
-python manage.py migrate
-
-### 5️⃣ (Optional) Load demo analytics data
-python manage.py load_demo_analytics
-
-### 6️⃣ Run the Django development server
-python manage.py runserver
-
-
-Now visit http://127.0.0.1:8000
- to access the platform.
-
-##🧠 Features Implemented in Final Sprint 2
+## 🧠 Features Implemented in Final Sprint 2
 ✅ Analytics Dashboard
 
 Interactive visualizations for Glucose, Sleep, and Steps
@@ -112,13 +90,36 @@ Added API endpoint list with usage examples
 
 Updated README for setup, data loading, and screenshots
 --------------------------------------------
-##🧪 API Endpoints
-Endpoint	Method	Description
-/analytics/	GET	Renders Analytics Dashboard
-/analytics/charts/data/?days=14	GET	Returns JSON containing glucose, sleep, and step data
-/analytics/insights/	GET	Displays health highlights (e.g., low sleep, high glucose)
-/analytics/insights/fragment/	GET	Partial template rendering for dashboard widgets
-/analytics/insights/dismiss/	POST	Dismisses a highlight for 48 hours
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Clone the repository
+```bash
+git clone https://github.com/<your-username>/CareU.git
+cd CareU
+
+### 2️⃣ Create a virtual environment
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+# or
+source .venv/bin/activate   # macOS/Linux
+
+### 3️⃣ Install dependencies
+pip install -r requirements.txt
+
+### 4️⃣ Apply migrations
+python manage.py migrate
+
+### 5️⃣ (Optional) Load demo analytics data
+python manage.py load_demo_analytics
+
+### 6️⃣ Run the Django development server
+python manage.py runserver
+
+
+Now visit http://127.0.0.1:8000
+ to access the platform.
+
 -----------------------------------------------
 Example JSON Response:
 
