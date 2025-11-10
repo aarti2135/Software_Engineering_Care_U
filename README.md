@@ -80,7 +80,7 @@ Now visit http://127.0.0.1:8000
 
 ------------------------------------------------
 
-🧠 Features Implemented in Final Sprint 2
+##🧠 Features Implemented in Final Sprint 2
 ✅ Analytics Dashboard
 
 Interactive visualizations for Glucose, Sleep, and Steps
@@ -115,7 +115,7 @@ Added API endpoint list with usage examples
 
 Updated README for setup, data loading, and screenshots
 --------------------------------------------
-🧪 API Endpoints
+##🧪 API Endpoints
 Endpoint	Method	Description
 /analytics/	GET	Renders Analytics Dashboard
 /analytics/charts/data/?days=14	GET	Returns JSON containing glucose, sleep, and step data
@@ -132,7 +132,7 @@ Example JSON Response:
   "steps": [8900, 7600, 10200]
 }
 -----------------------------------------------
-💡 Demo Data Command
+##💡 Demo Data Command
 
 To easily populate your database with realistic demo entries:
 
