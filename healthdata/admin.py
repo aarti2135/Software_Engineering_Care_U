@@ -3,7 +3,7 @@ from .models import (
     NutritionEntry, HealthReminder, ActivityData, SleepData, HealthMetrics,
     GlucoseEntry, MedicationEntry, DoctorNote,
     VitalLog, MoodLog, SymptomLog, HabitLog, WellbeingLog,
-    Goal, GoalProgressLog
+    Goal, GoalProgressLog  # ✅ added missing models
 )
 
 
@@ -56,17 +56,20 @@ class HealthReminderAdmin(admin.ModelAdmin):
     is_active.boolean = True
     is_active.short_description = 'Active'
 
+
 @admin.register(ActivityData)
 class ActivityDataAdmin(admin.ModelAdmin):
     list_display = ('user', 'date', 'activity_type', 'steps', 'active_minutes')
     list_filter = ('activity_type', 'date')
     search_fields = ('user__username',)
 
+
 @admin.register(SleepData)
 class SleepDataAdmin(admin.ModelAdmin):
     list_display = ('user', 'date', 'total_sleep_minutes', 'sleep_quality')
     list_filter = ('sleep_quality', 'date')
     search_fields = ('user__username',)
+
 
 @admin.register(HealthMetrics)
 class HealthMetricsAdmin(admin.ModelAdmin):
@@ -142,11 +145,20 @@ class WellbeingLogAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'notes')
     date_hierarchy = 'date'
 
+
+# ---------------------------------------------------------------------
+# ✅ Goal & Progress Admin (newly added)
+# ---------------------------------------------------------------------
+
 @admin.register(Goal)
 class GoalAdmin(admin.ModelAdmin):
-    list_display = ("user", "title", "goal_type", "frequency", "target_value", "current_value", "status", "due_date", "updated_at")
+    list_display = (
+        "user", "title", "goal_type", "frequency",
+        "target_value", "current_value", "status", "due_date", "updated_at"
+    )
     list_filter = ("goal_type", "frequency", "status")
     search_fields = ("title", "user__username")
+
 
 @admin.register(GoalProgressLog)
 class GoalProgressLogAdmin(admin.ModelAdmin):

@@ -494,7 +494,7 @@
         <div class="user-info">{{ request.user.username }}</div>
       </div>
 
-      <a href="{% url 'home_dashboard' %}" class="nav-icon" data-tooltip="Home">
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Home">
         <i>🏠</i>
       </a>
       <a href="#" class="nav-icon" data-tooltip="Goals">
@@ -503,12 +503,12 @@
       <a href="#" class="nav-icon" data-tooltip="Chat">
         <i>💬</i>
       </a>
-      <a href="#" class="nav-icon" data-tooltip="Analytics">
-        <i>📊</i>
-      </a>
-      <a href="{% url 'reminders_dashboard' %}" class="nav-icon active" data-tooltip="Reminders">
-        <i>🔔</i>
-      </a>
+      <a href="#" id="nav-analytics" class="nav-icon" data-tooltip="Analytics">
+     <i>📊</i>
+     </a>
+     <a href="#" id="nav-reminders" class="nav-icon active" data-tooltip="Reminders">
+     <i>🔔</i>
+     </a>
       <a href="#" class="nav-icon" data-tooltip="Settings">
         <i>⚙️</i>
       </a>
@@ -537,6 +537,7 @@
 
       <!-- Reminder Cards -->
       <!-- Reminder Cards -->
+        <section id="reminders-box">
       <h4 class="fw-semibold mb-3">Today's Health Insights</h4>
 
       {% if reminders %}
@@ -617,7 +618,10 @@
 
       <!-- Add Reminder Button -->
       <button class="btn-floating">+</button>
-
+    </section>
+     <section id="analytics-box" class="d-none">
+    <div id="analytics-mount"></div>
+     </section>
     </main>
 
     <!-- Right Sidebar -->
@@ -669,5 +673,153 @@
       });
     });
   </script>
+<script>
+  const navAnalytics = document.getElementById('nav-analytics');
+  const navReminders = document.getElementById('nav-reminders');
+  const boxAnalytics = document.getElementById('analytics-box');
+  const boxReminders = document.getElementById('reminders-box');
+  const mount = document.getElementById('analytics-mount');
+
+  function setActive(el) {
+    document.querySelectorAll('.sidebar-left .nav-icon').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function ensureChartJs() {
+    if (window.Chart) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js";
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("Chart.js failed to load"));
+      document.head.appendChild(s);
+    });
+  }
+
+  /** APPEND (do not replace) a charts wrapper after the cards */
+  function ensureChartsContainer(root) {
+  let wrap = root.querySelector('#charts-wrap');
+  if (wrap) return wrap;
+  wrap = document.createElement('div');
+  wrap.id = 'charts-wrap';
+  wrap.className = 'mt-4';
+  wrap.innerHTML = `
+    <h4 class="fw-semibold mb-3">Analytics</h4>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card p-3" style="height:280px">
+          <h6>Glucose (mg/dL)</h6>
+          <canvas id="glucoseChart"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card p-3" style="height:280px">
+          <h6>Sleep (hours)</h6>
+          <canvas id="sleepChart"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="card p-3" style="height:300px">
+          <h6>Steps per day</h6>
+          <canvas id="stepsChart"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card p-3" style="height:300px; display:flex; flex-direction:column; justify-content:center;">
+          <h6 class="mb-3">7-day averages</h6>
+          <div class="d-flex flex-column gap-2">
+            <div>
+              <small class="text-muted">Glucose</small>
+              <div id="avgGlucose" class="fs-4 fw-semibold">–</div>
+            </div>
+            <div>
+              <small class="text-muted">Sleep</small>
+              <div id="avgSleep" class="fs-4 fw-semibold">–</div>
+            </div>
+            <div>
+              <small class="text-muted">Steps / day</small>
+              <div id="avgSteps" class="fs-4 fw-semibold">–</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  root.appendChild(wrap);
+  return wrap;
+}
+  const chartRefs = {};
+  function makeOrUpdateChart(id, cfg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (chartRefs[id]) chartRefs[id].destroy();
+    chartRefs[id] = new Chart(el.getContext('2d'), cfg);
+  }
+
+  async function drawCharts() {
+    const resp = await fetch("/analytics/charts/data/?days=14", { credentials: "same-origin" });
+    const data = await resp.json();
+    if (data.empty) return;
+
+    const common = { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } };
+
+    makeOrUpdateChart("glucoseChart", {
+      type: "line",
+      data: { labels: data.labels, datasets: [{ label: "Glucose", data: data.glucose, tension: 0.35 }] },
+      options: common
+    });
+
+    makeOrUpdateChart("sleepChart", {
+      type: "line",
+      data: { labels: data.labels, datasets: [{ label: "Sleep (hrs)", data: data.sleep, tension: 0.35 }] },
+      options: common
+    });
+
+    makeOrUpdateChart("stepsChart", {
+      type: "bar",
+      data: { labels: data.labels, datasets: [{ label: "Steps", data: data.steps }] },
+      options: common
+    });
+
+    makeOrUpdateChart("donutChart", {
+      type: "doughnut",
+      data: { labels: data.donut.labels, datasets: [{ data: data.donut.values }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
+    });
+  }
+
+  async function showAnalytics() {
+    setActive(navAnalytics);
+    boxReminders.classList.add('d-none');
+    boxAnalytics.classList.remove('d-none');
+
+    // Load the HIGHLIGHT CARDS fragment once
+    if (mount.dataset.loaded !== "1") {
+      try {
+        const resp = await fetch("{% url 'analytics:insights_fragment' %}", { credentials: "same-origin" });
+        mount.innerHTML = await resp.text();  // this contains your 3 highlight cards
+        mount.dataset.loaded = "1";
+      } catch {
+        mount.innerHTML = '<div class="alert alert-danger">Failed to load analytics.</div>';
+        return;
+      }
+    }
+
+    // Append charts area under the cards, then draw
+    ensureChartsContainer(mount);
+    await ensureChartJs();
+    drawCharts();
+  }
+
+  navAnalytics.addEventListener('click', (e) => { e.preventDefault(); showAnalytics(); });
+
+  navReminders.addEventListener('click', (e) => {
+    e.preventDefault();
+    setActive(navReminders);
+    boxAnalytics.classList.add('d-none');
+    boxReminders.classList.remove('d-none');
+  });
+</script>
+
 </body>
 </html>

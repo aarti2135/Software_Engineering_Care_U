@@ -1,0 +1,122 @@
+<!-- Analytics Fragment (clean + only charts) -->
+<style>
+  .chart-card { min-height: 280px; }
+  .chart-card .card-body { padding: 1rem 1rem 1.25rem; }
+  .chart-card h6 { margin-bottom: .5rem; font-weight: 600; }
+  .chart-card canvas {
+    display: block;
+    width: 100% !important;
+    height: 200px !important;
+  }
+  @media (max-width: 576px) {
+    .chart-card { min-height: 240px; }
+    .chart-card canvas { height: 180px !important; }
+  }
+</style>
+
+<div class="mb-2">
+  <h4 class="fw-semibold">Analytics</h4>
+  <p class="text-muted mb-3">Trends for the last 14 days</p>
+</div>
+
+<div class="row g-4">
+  <!-- Glucose -->
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm chart-card">
+      <div class="card-body">
+        <h6 class="card-title">Glucose (mg/dL)</h6>
+        <canvas id="chartGlucose"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sleep -->
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm chart-card">
+      <div class="card-body">
+        <h6 class="card-title">Sleep (hours)</h6>
+        <canvas id="chartSleep"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="col-12">
+    <div class="card shadow-sm chart-card">
+      <div class="card-body">
+        <h6 class="card-title">Steps per day</h6>
+        <canvas id="chartSteps"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+(function() {
+  const commonOpts = {
+    responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 2,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { maxTicksLimit: 6 } },
+      x: { ticks: { maxRotation: 0, autoSkip: true } }
+    }
+  };
+
+  const mkLine = (el, label, labels, series) =>
+    new Chart(el, {
+      type: 'line',
+      data: { labels, datasets: [{ label, data: series, tension: 0.35, pointRadius: 2 }] },
+      options: commonOpts
+    });
+
+  const mkBar = (el, label, labels, series) =>
+    new Chart(el, {
+      type: 'bar',
+      data: { labels, datasets: [{ label, data: series, borderRadius: 6 }] },
+      options: commonOpts
+    });
+
+  function nodata(canvasId, msg) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+    const box = el.closest('.card-body');
+    if (box)
+      box.innerHTML = '<div class="alert alert-info mb-0"><strong>All clear</strong><br>' + msg + '</div>';
+  }
+
+  async function loadData() {
+    try {
+      const resp = await fetch("{% url 'analytics:charts_data' %}?days=14", { credentials: 'same-origin' });
+      const data = await resp.json();
+
+      if (data.empty) {
+        const msg = 'No recent data found in the selected window.';
+        nodata('chartGlucose', msg);
+        nodata('chartSleep', msg);
+        nodata('chartSteps', msg);
+        return;
+      }
+
+      mkLine(document.getElementById('chartGlucose'), 'Glucose', data.labels, data.glucose);
+      mkLine(document.getElementById('chartSleep'), 'Sleep (hrs)', data.labels, data.sleep);
+      mkBar(document.getElementById('chartSteps'), 'Steps', data.labels, data.steps);
+
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+
+    } catch (e) {
+      console.error(e);
+      const msg = 'Failed to load analytics.';
+      nodata('chartGlucose', msg);
+      nodata('chartSleep', msg);
+      nodata('chartSteps', msg);
+    }
+  }
+
+  loadData();
+})();
+</script>

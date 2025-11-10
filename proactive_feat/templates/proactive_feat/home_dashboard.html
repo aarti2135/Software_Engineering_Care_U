@@ -100,6 +100,21 @@
       color: white;
     }
 
+    .btn-analytics {
+      background: #007AFF;
+      color: white;
+      border-radius: 12px;
+      padding: 1rem 2rem;
+      font-weight: 500;
+      display: inline-block;
+      text-decoration: none;
+      transition: background 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,122,255,0.3);
+    }
+    .btn-analytics:hover {
+      background: #005FCC;
+    }
+
     a.latest-goal-link {
       text-decoration: none;
       color: inherit;
@@ -127,8 +142,9 @@
       <!-- Navigation Icons -->
       <a href="{% url 'dashboard' %}" class="nav-icon active" title="Home">🏠</a>
       <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" title="Nutrition">🍎</a>
-      <!-- ✅ Updated Goals link -->
       <a href="{% url 'goal_dashboard' %}" class="nav-icon" title="Goals">🎯</a>
+      <!-- ✅ Added Analytics link (fixed namespace) -->
+      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" title="Analytics">📊</a>
       <a href="{% url 'reminders_dashboard' %}" class="nav-icon" title="Reminders">🔔</a>
       <a href="{% url 'pro_launcher' %}" class="nav-icon" title="AI Assistant">🤖</a>
     </div>
@@ -182,13 +198,23 @@
     </a>
 
     <!-- Quick Access -->
-    <div class="mt-4">
-      <h5 class="mb-3">Quick Access</h5>
-      <a href="{% url 'nutrition_dashboard' %}" class="btn-nav">🍎 Nutrition Dashboard</a>
-      <!-- ✅ Updated Goal link -->
-      <a href="{% url 'goal_dashboard' %}" class="btn-nav">🎯 Goals</a>
-      <a href="{% url 'reminders_dashboard' %}" class="btn-nav">🔔 Reminders</a>
-      <a href="{% url 'pro_launcher' %}" class="btn-nav">🤖 AI & Proactive Health</a>
+    <div class="mt-4 text-center">
+      <h5 class="mb-3 text-start">Quick Access</h5>
+      <div class="d-grid gap-3 col-md-6 mx-auto">
+        <a href="{% url 'nutrition_dashboard' %}" class="btn-nav">🍎 Nutrition Dashboard</a>
+        <a href="{% url 'goal_dashboard' %}" class="btn-nav">🎯 Goals</a>
+        <!-- ✅ Fixed namespaced link -->
+        <a href="{% url 'analytics:analytics_dashboard' %}" class="btn-nav">📊 Analytics Dashboard</a>
+        <a href="{% url 'reminders_dashboard' %}" class="btn-nav">🔔 Reminders</a>
+        <a href="{% url 'pro_launcher' %}" class="btn-nav">🤖 AI & Proactive Health</a>
+      </div>
+
+      <!-- ✅ Updated Analytics Button -->
+      <div class="mt-5">
+        <a href="{% url 'analytics:analytics_dashboard' %}" class="btn-analytics">
+          📊 View Analytics Dashboard
+        </a>
+      </div>
     </div>
   </main>
 </div>
@@ -210,10 +236,7 @@
         borderWidth: 0
       }]
     },
-    options: {
-      cutout: '80%',
-      plugins: { legend: { display: false } }
-    }
+    options: { cutout: '80%', plugins: { legend: { display: false } } }
   });
 
   const heartRate = {{ heart_rate|default:0 }};
@@ -226,10 +249,7 @@
         borderWidth: 0
       }]
     },
-    options: {
-      cutout: '80%',
-      plugins: { legend: { display: false } }
-    }
+    options: { cutout: '80%', plugins: { legend: { display: false } } }
   });
 </script>
 </body>
