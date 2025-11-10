@@ -101,7 +101,6 @@ python manage.py load_demo_analytics
 ```bash
 git clone https://github.com/<your-username>/CareU.git
 cd CareU
-
 ### 2️⃣ Create a virtual environment
 python -m venv .venv
 .venv\Scripts\activate   # Windows
