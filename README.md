@@ -90,7 +90,11 @@ Added API endpoint list with usage examples
 
 Updated README for setup, data loading, and screenshots
 --------------------------------------------
+## 💡 Demo Data Command
 
+To easily populate your database with realistic demo entries:
+
+python manage.py load_demo_analytics
 ## ⚙️ Installation & Setup
 
 ### 1️⃣ Clone the repository
@@ -130,9 +134,5 @@ Example JSON Response:
   "steps": [8900, 7600, 10200]
 }
 -----------------------------------------------
-##💡 Demo Data Command
 
-To easily populate your database with realistic demo entries:
-
-python manage.py load_demo_analytics
 -----------------------------------------------
