@@ -1,6 +1,6 @@
 # 🩺 CareU – Health & Wellness Analytics Platform  
 **Final Sprint 2 – Software Engineering Project**  
-*University of Pisa | Master’s in Computer Science – Big Data Technologies Track*  
+*Concordia University 
 **Course:** COEN 6311 – Software Engineering  
 **Team Members:**  
 - **Anas El Fali** 
