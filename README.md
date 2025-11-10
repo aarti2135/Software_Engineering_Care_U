@@ -3,9 +3,11 @@
 *University of Pisa | Master’s in Computer Science – Big Data Technologies Track*  
 **Course:** COEN 6311 – Software Engineering  
 **Team Members:**  
-- **Salma Morkani** – Backend Developer  
-- **Oumaima Alazhari** – Frontend Developer  
-- **Mehdi Test** – Project Manager  
+- **Anas El Fali** 
+- **Mikelange Ngakala**
+- **Rafsan Khan**
+- **Aarti Aarti**
+- **Mohamad Jawad** 
 
 ---
 
