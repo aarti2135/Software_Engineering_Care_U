@@ -47,7 +47,6 @@ care_u/
 └── db.sqlite3
 
 
----
 
 ## ⚙️ Installation & Setup
 
@@ -77,8 +76,6 @@ python manage.py runserver
 
 Now visit http://127.0.0.1:8000
  to access the platform.
-
-------------------------------------------------
 
 ##🧠 Features Implemented in Final Sprint 2
 ✅ Analytics Dashboard
