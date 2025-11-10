@@ -5,7 +5,7 @@ from pathlib import Path
 # --------------------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ⚠️ Dev-only key (don’t use in production)
+# ⚠️ Dev-only key (do NOT use in production)
 SECRET_KEY = 'django-insecure-cn%@pbfr9i7)3*y(0*nd5hxb%f9pevs57xz=1f-yvwy#w7jt73'
 
 DEBUG = True
@@ -28,11 +28,11 @@ INSTALLED_APPS = [
     'healthdata',
     'User_Login',
     'proactive_feat',
+    'analytics',  #  added from analytics branch
 
     # Third-party
     'rest_framework',
 ]
-
 
 # --------------------------------------------------------------------------------------
 # Middleware
@@ -124,17 +124,15 @@ REST_FRAMEWORK = {
     ],
 }
 
-# --------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Authentication redirects
-# --------------------------------------------------------
-#LOGIN_URL = '/accounts/login/'
-# LOGIN_REDIRECT_URL = '/api/dashboard/nutrition/'
-#LOGIN_REDIRECT_URL = '/dashboard/'      #  Redirects to Home Dashboard
-#LOGOUT_REDIRECT_URL = '/accounts/login/'
-
-# ---------------------------------------------------------
-# Authentication redirects
-# ---------------------------------------------------------
+# --------------------------------------------------------------------------------------
+# Namespace-based login system
 LOGIN_URL = 'User_Login:login'             # namespaced login view
-LOGIN_REDIRECT_URL = 'dashboard'           # healthdata home dashboard
-LOGOUT_REDIRECT_URL = 'User_Login:login'   # redirect back to login after logout
+LOGIN_REDIRECT_URL = 'dashboard'           # main home dashboard (healthdata)
+LOGOUT_REDIRECT_URL = 'User_Login:login'   # redirect to login after logout
+
+# Alternative for non-namespaced or API dashboards (commented)
+# LOGIN_URL = '/accounts/login/'
+# LOGIN_REDIRECT_URL = '/dashboard/'
+# LOGOUT_REDIRECT_URL = '/accounts/login/'

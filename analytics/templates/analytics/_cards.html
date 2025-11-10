@@ -1,0 +1,95 @@
+{# Analytics highlights fragment (self-contained, no external IDs required) #}
+<div class="hi-scope">
+  <style>
+    /* Scope everything to this fragment only */
+    .hi-scope .hi-wrap { width: 100%; }
+    /* keep clear of right rail only inside this scope */
+    @media (min-width: 1200px) {
+      .hi-scope .hi-wrap { padding-right: 330px; }
+    }
+
+    .hi-scope .hi-title{font-weight:700;font-size:1.1rem;margin:1rem 0 .5rem}
+    .hi-scope .hi-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+    .hi-scope .span-6{grid-column:span 12}
+    .hi-scope .span-12{grid-column:span 12}
+    @media (min-width:992px){.hi-scope .span-6{grid-column:span 6}}
+
+    .hi-scope .hi-card{background:#fff;border-radius:14px;border:1px solid #eef1f5;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+    .hi-scope .hi-body{padding:14px 16px}
+    .hi-scope .hi-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+    /* small icon chip */
+    .hi-scope .hi-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:.85rem;font-weight:600;color:#334155;background:#eef3ff}
+    .hi-scope .hi-chip .icon{font-size:14px;line-height:1}
+
+    .hi-scope .hi-title-sm{margin:8px 0 4px;font-size:1.02rem;font-weight:700}
+    .hi-scope .hi-text{margin:0 0 8px;color:#475569;font-size:.95rem}
+
+    .hi-scope .hi-disclosure summary{cursor:pointer;user-select:none;font-weight:600;color:#2563eb;margin-top:2px;margin-bottom:4px;font-size:.95rem}
+    .hi-scope .hi-list{margin:0;padding-left:18px;color:#475569}
+
+    .hi-scope .hi-doctor{margin-top:8px;background:#fff7e6;border:1px solid #ffe2a9;color:#8a5a00;border-radius:10px;padding:8px 10px;font-size:.92rem}
+
+    .hi-scope .hi-dismiss{border:1px solid #e5e7eb;background:#fff;color:#475569;border-radius:999px;padding:5px 10px;font-size:.8rem}
+    .hi-scope .hi-empty{background:#f8fafc;border:1px dashed #e2e8f0;color:#475569;border-radius:12px;padding:14px;text-align:center}
+  </style>
+
+  <div class="hi-wrap">
+    <div class="hi-title">Today's Health Highlights</div>
+
+    {% if highlights %}
+      <div class="hi-grid">
+        {% for h in highlights %}
+          <div class="hi-card {% if forloop.counter <= 2 %}span-6{% else %}span-12{% endif %}">
+            <div class="hi-body">
+              <div class="hi-head">
+                <div class="hi-chip">
+                  <span class="icon">
+                    {% if h.key == 'high_glucose' %}🩸{% elif h.key == 'low_sleep' %}😴{% elif h.key == 'activity_drop' %}🏃{% else %}✨{% endif %}
+                  </span>
+                  <span>
+                    {% if h.key == 'high_glucose' %}High Glucose
+                    {% elif h.key == 'low_sleep' %}Low Sleep
+                    {% elif h.key == 'activity_drop' %}Activity Drop
+                    {% else %}Highlight{% endif %}
+                  </span>
+                </div>
+
+                <form method="post" action="{% url 'analytics:dismiss_highlight' %}?next={{ request.path|urlencode }}">
+                  {% csrf_token %}
+                  <input type="hidden" name="key" value="{{ h.key }}">
+                  <button type="submit" class="hi-dismiss">Dismiss 48h</button>
+                </form>
+              </div>
+
+              <h6 class="hi-title-sm">{{ h.title }}</h6>
+              <p class="hi-text">{{ h.message }}</p>
+
+              {% if h.why %}
+                <details class="hi-disclosure">
+                  <summary>Why this matters</summary>
+                  <div class="hi-text">{{ h.why }}</div>
+                </details>
+              {% endif %}
+
+              {% if h.actions %}
+                <details class="hi-disclosure">
+                  <summary>What you can do</summary>
+                  <ul class="hi-list">
+                    {% for a in h.actions %}<li>{{ a }}</li>{% endfor %}
+                  </ul>
+                </details>
+              {% endif %}
+
+              {% if h.doctor_hint %}
+                <div class="hi-doctor">⚠️ Consider discussing this pattern with your doctor if it continues.</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="hi-empty">✅ All clear for now — no significant changes detected based on your recent data.</div>
+    {% endif %}
+  </div>
+</div>

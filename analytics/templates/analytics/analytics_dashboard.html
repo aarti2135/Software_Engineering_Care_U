@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Analytics Dashboard · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap & Fonts -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #007AFF;
+      --secondary: #5856D6;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --text-primary: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --card-radius: 16px;
+      --sidebar-width: 80px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr 300px;
+      min-height: 100vh;
+    }
+
+    /* Sidebar (Left) */
+    .sidebar-left {
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      padding: 2rem 0;
+      position: fixed;
+      width: var(--sidebar-width);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .user-info {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .nav-icon:hover, .nav-icon.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Main Content */
+    .main-content {
+      grid-column: 2;
+      padding: 2rem;
+      margin-left: var(--sidebar-width);
+    }
+
+    h2.page-title {
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-card {
+      background: var(--bg-primary);
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Right Sidebar */
+    .sidebar-right {
+      background: var(--bg-primary);
+      border-left: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      position: fixed;
+      right: 0;
+      width: 300px;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .ai-insight {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: var(--card-radius);
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+
+<body>
+<div class="app-container">
+
+  <!-- Sidebar Left -->
+  <nav class="sidebar-left">
+    <div>
+      <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+      <div class="user-info">{{ request.user.username }}</div>
+    </div>
+
+    <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">🏠</a>
+    <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">🎯</a>
+    <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Nutrition">🍎</a>
+    <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon active" data-tooltip="Analytics">📊</a>
+    <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">🔔</a>
+    <a href="{% url 'pro_launcher' %}" class="nav-icon" data-tooltip="AI Assistant">🤖</a>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <h2 class="page-title">📈 Analytics Overview</h2>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h6 class="fw-semibold text-primary mb-3">Glucose (mg/dL)</h6>
+          <canvas id="glucoseChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h6 class="fw-semibold text-success mb-3">Sleep (hours)</h6>
+          <canvas id="sleepChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <div class="chart-card">
+          <h6 class="fw-semibold text-info mb-3">Steps per Day</h6>
+          <canvas id="stepsChart" height="130"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- No data message -->
+    <div id="noDataMsg" class="text-center py-5 text-muted d-none">
+      <h5>No analytics data available.</h5>
+      <p class="small">Try logging new sleep, activity, or glucose data.</p>
+    </div>
+  </main>
+
+  <!-- Right Sidebar -->
+  <aside class="sidebar-right">
+    <h6 class="fw-semibold mb-3">Quick Actions</h6>
+    <button class="btn btn-outline w-100 mb-3">+ Add Note</button>
+    <button class="btn btn-primary w-100">Mark All Done</button>
+
+    <div class="mt-4">
+      <h6 class="fw-semibold mb-3">Theme Colors</h6>
+      <div class="d-flex gap-2">
+        <div class="color-option" style="background:#007AFF;width:24px;height:24px;border-radius:6px;"></div>
+        <div class="color-option" style="background:#5856D6;width:24px;height:24px;border-radius:6px;"></div>
+        <div class="color-option" style="background:#FF2D55;width:24px;height:24px;border-radius:6px;"></div>
+        <div class="color-option" style="background:#34C759;width:24px;height:24px;border-radius:6px;"></div>
+      </div>
+    </div>
+
+    <div class="ai-insight">
+      <div class="icon mb-2">🤖</div>
+      <h6 class="fw-semibold">AI Insight</h6>
+      <p class="small mb-0">"Consistent small improvements lead to lasting health changes. Celebrate your progress today!"</p>
+    </div>
+  </aside>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async function() {
+  try {
+    const res = await fetch("{% url 'analytics:charts_data' %}?days=14");
+    const data = await res.json();
+
+    if (data.empty) {
+      document.getElementById("noDataMsg").classList.remove("d-none");
+      return;
+    }
+
+    const baseOptions = {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: "#eee" } },
+        x: { grid: { color: "#fafafa" } }
+      }
+    };
+
+    new Chart(document.getElementById("glucoseChart"), {
+      type: "line",
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: "Glucose (mg/dL)",
+          data: data.glucose,
+          borderColor: "#007bff",
+          backgroundColor: "rgba(0,123,255,0.1)",
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: baseOptions
+    });
+
+    new Chart(document.getElementById("sleepChart"), {
+      type: "line",
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: "Sleep (hours)",
+          data: data.sleep,
+          borderColor: "#28a745",
+          backgroundColor: "rgba(40,167,69,0.1)",
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: baseOptions
+    });
+
+    new Chart(document.getElementById("stepsChart"), {
+      type: "bar",
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: "Steps",
+          data: data.steps,
+          backgroundColor: "rgba(23,162,184,0.7)",
+          borderRadius: 4
+        }]
+      },
+      options: baseOptions
+    });
+
+  } catch (err) {
+    console.error("Error loading analytics data:", err);
+  }
+});
+</script>
+</body>
+</html>
