@@ -1,36 +1,16 @@
-<<<<<<< HEAD
 # IDE
 .idea/
 *.iml
 *.iws
+.vscode/
+.cursor/
 
-# ignore env & caches
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Database
-*.sqlite3
-*.db
-*backup.json
-
-# Environment variables
-.env
-.env.local
-
-# Logs
-*.log
-
-db.sqlite3
-*.sqlite3
-
-=======
 # Python bytecode & cache
 __pycache__/
 **/__pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 *.egg-info/
 
 # Virtual env
@@ -39,16 +19,21 @@ __pycache__/
 # Django DB & generated files
 db.sqlite3
 *.sqlite3
+*.db
 media/
 staticfiles/
 
-# Env / secrets
+# Environment variables / secrets
 .env
 .env.*
+.env.local
 
-# IDE / OS
-.vscode/
-.idea/
+# Logs
+*.log
+
+# Backup files
+*backup.json
+
+# OS files
 .DS_Store
 Thumbs.db
->>>>>>> 816e25b (Implement proactive health monitoring)

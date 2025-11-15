@@ -1,17 +1,17 @@
 # usermanagement/urls.py
 from django.urls import path
+from . import views
 
-# ✅ Correct imports (based on your folder structure)
-from usermanagement.views.health_alerts_views import ProviderAlertsView
-from usermanagement.views.consent_views import ConsentView
-
-# ✅ Namespace so {% url 'usermanagement:...' %} works in templates
+# Namespace so {% url 'usermanagement:...' %} works in templates
 app_name = "usermanagement"
 
 urlpatterns = [
-    # 🔹 Provider Alerts page (AI-assisted recommendations)
-    path("provider_alerts/", ProviderAlertsView.as_view(), name="provider_alerts"),
+    # Provider Alerts page (AI-assisted recommendations)
+    path("provider_alerts/", views.ProviderAlertsView.as_view(), name="provider_alerts"),
 
-    # 🔹 Consent page (user data-sharing preferences)
-    path("consent/",ConsentView.as_view(),name="consent"),
+    # Consent page (user data-sharing preferences)
+    path("consent/", views.ConsentView.as_view(), name="consent"),
+
+    # Request data sharing (button on dashboard)
+    path("request-sharing/", views.RequestDataSharingView.as_view(), name="request-sharing"),
 ]

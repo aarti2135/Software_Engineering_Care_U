@@ -556,22 +556,30 @@
           </div>
 
           <!-- Why This Matters - Collapsible -->
-          {% if reminder.explanation %}
           <div class="why-matters">
-            <button class="why-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#why-{{ reminder.id }}" aria-expanded="false" aria-controls="why-{{ reminder.id }}">
-              <span>Why this matters</span>
-              <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-              </svg>
-            </button>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+              <button class="why-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#why-{{ reminder.id }}" aria-expanded="false" aria-controls="why-{{ reminder.id }}">
+                <span>Why this matters</span>
+                <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </button>
+              <button class="btn-ai-explanation" type="button" data-reminder-id="{{ reminder.id }}" data-reminder-title="{{ reminder.title }}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s;">
+                <span class="ai-btn-text">🤖 Get AI Explanation</span>
+                <span class="ai-btn-loading" style="display: none;">⏳ Generating...</span>
+              </button>
+            </div>
 
             <div class="collapse why-content" id="why-{{ reminder.id }}">
-              <div class="why-content-inner">
-                {{ reminder.explanation|linebreaks }}
+              <div class="why-content-inner" id="why-content-{{ reminder.id }}">
+                {% if reminder.explanation %}
+                  {{ reminder.explanation|linebreaks }}
+                {% else %}
+                  <p class="text-muted">Click "Get AI Explanation" to learn why this reminder is important for you.</p>
+                {% endif %}
               </div>
             </div>
           </div>
-          {% endif %}
 
           <!-- What You Can Do - Collapsible -->
           {% if reminder.actionable_steps %}
@@ -651,6 +659,24 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Get CSRF token for API calls
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+  </script>
   <script>
     // Theme color switching
     document.querySelectorAll('.color-option').forEach(option => {
@@ -818,6 +844,74 @@
     setActive(navReminders);
     boxAnalytics.classList.add('d-none');
     boxReminders.classList.remove('d-none');
+  });
+
+  // AI Explanation functionality
+  document.querySelectorAll('.btn-ai-explanation').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const reminderId = this.dataset.reminderId;
+      const reminderTitle = this.dataset.reminderTitle;
+      const contentDiv = document.getElementById(`why-content-${reminderId}`);
+      const collapseElement = document.getElementById(`why-${reminderId}`);
+      const btnText = this.querySelector('.ai-btn-text');
+      const btnLoading = this.querySelector('.ai-btn-loading');
+      
+      // Show loading state
+      btnText.style.display = 'none';
+      btnLoading.style.display = 'inline';
+      this.disabled = true;
+      this.style.opacity = '0.6';
+      
+      // Ensure the collapse is open
+      if (!collapseElement.classList.contains('show')) {
+        const bsCollapse = new bootstrap.Collapse(collapseElement, { toggle: true });
+      }
+      
+      // Show loading message
+      contentDiv.innerHTML = '<p class="text-muted"><em>🤖 AI is analyzing your data and generating a personalized explanation...</em></p>';
+      
+      try {
+        // Call AI API
+        const response = await fetch('/api/agent/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken || ''
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            message: `Why am I getting this reminder: "${reminderTitle}"? Please explain based on my actual health data.`,
+            days_to_analyze: 7
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        // Display AI-generated explanation
+        contentDiv.innerHTML = `<div style="white-space: pre-wrap; line-height: 1.6;">${data.response}</div>`;
+        
+      } catch (error) {
+        console.error('Error getting AI explanation:', error);
+        contentDiv.innerHTML = `<div class="alert alert-warning" style="margin: 0;">
+          <strong>Unable to generate AI explanation.</strong><br>
+          <small>${error.message || 'Please try again later or check the static explanation above.'}</small>
+        </div>`;
+      } finally {
+        // Reset button state
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+        this.disabled = false;
+        this.style.opacity = '1';
+      }
+    });
   });
 </script>
 

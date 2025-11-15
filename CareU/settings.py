@@ -1,4 +1,9 @@
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # --------------------------------------------------------------------------------------
 # Core
@@ -28,10 +33,12 @@ INSTALLED_APPS = [
     'healthdata',
     'User_Login',
     'proactive_feat',
-    'analytics',  #  added from analytics branch
+    'analytics',
+    'ai_agent',  # AI agent for personalized health recommendations
 
     # Third-party
     'rest_framework',
+    "django_extensions",
 ]
 
 # --------------------------------------------------------------------------------------
@@ -136,3 +143,8 @@ LOGOUT_REDIRECT_URL = 'User_Login:login'   # redirect to login after logout
 # LOGIN_URL = '/accounts/login/'
 # LOGIN_REDIRECT_URL = '/dashboard/'
 # LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# --------------------------------------------------------------------------------------
+# Gemini API Configuration
+# --------------------------------------------------------------------------------------
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
