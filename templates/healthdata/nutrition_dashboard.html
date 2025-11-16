@@ -153,7 +153,7 @@
       <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
         <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
       </a>
-      <a href="#" class="nav-icon" data-tooltip="Chats">
+      <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon" data-tooltip="Chats">
         <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
       </a>
       <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">

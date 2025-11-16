@@ -1,0 +1,591 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>AI Chat · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #007AFF;
+      --secondary: #5856D6;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --text-primary: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --card-radius: 16px;
+      --sidebar-width: 80px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar-left {
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      padding: 2rem 0;
+      position: fixed;
+      width: var(--sidebar-width);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      text-decoration: none;
+      position: relative;
+    }
+
+    .nav-icon:hover,
+    .nav-icon.active {
+      background: #e5e5ea;
+      color: var(--text-primary);
+    }
+
+    .nav-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--text-primary);
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      margin-left: 0.5rem;
+      z-index: 1001;
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      margin: 0 auto 1.5rem auto;
+    }
+
+    .main-content {
+      grid-column: 2;
+      padding: 1.5rem 2rem 1.5rem 2rem;
+      
+    }
+
+    .chat-shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 1rem;
+      height: calc(100vh - 3rem); /* fill viewport minus vertical padding */
+    }
+
+    .chat-sidebar {
+      background: var(--bg-primary);
+      border-radius: var(--card-radius);
+      padding: 1rem 1.25rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-main {
+      background: var(--bg-primary);
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-sidebar-header {
+      padding: 0.75rem 0.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chat-sidebar-header h5 {
+      font-weight: 600;
+      margin: 0;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .chat-history-list {
+      margin-top: 0.75rem;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .chat-history-item {
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      margin-bottom: 0.25rem;
+      color: var(--text-primary);
+    }
+
+    .chat-history-item:hover {
+      background: var(--bg-secondary);
+    }
+
+    .chat-history-item.active {
+      background: rgba(0,122,255,0.08);
+      border: 1px solid rgba(0,122,255,0.2);
+    }
+
+    .chat-new-btn {
+      width: 100%;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      padding: 0.4rem 0.75rem;
+    }
+
+    .chat-header {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header h5 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      background: linear-gradient(180deg, #f5f5fa 0%, #ffffff 40%);
+    }
+
+    .chat-message {
+      max-width: 720px;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .chat-message.user {
+      margin-left: auto;
+      background: #e5f2ff;
+    }
+
+    .chat-message.assistant {
+      margin-right: auto;
+      background: #f4f4f8;
+    }
+
+    .chat-message-role {
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      color: var(--text-secondary);
+    }
+
+    .chat-empty {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .chat-input-container {
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1.25rem 0.5rem;
+      background: var(--bg-primary);
+      border-radius: 0 0 var(--card-radius) var(--card-radius);
+    }
+
+    .chat-input-wrapper {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      resize: none;
+      max-height: 120px;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px rgba(0,122,255,0.15);
+    }
+
+    .chat-send-btn {
+      border-radius: 999px;
+      padding-inline: 1.1rem;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 992px) {
+      .chat-shell {
+        grid-template-columns: 1fr;
+      }
+      .chat-sidebar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <nav class="sidebar-left">
+      <div class="user-avatar">
+        {{ request.user.username|first|upper }}
+      </div>
+      <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+        <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
+      </a>
+      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+        <img src="{% static 'img/analytics_icon.png' %}" alt="Analytics" width="22" height="22">
+      </a>
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Nutrition">
+        <img src="{% static 'img/nutrition_icon.png' %}" alt="Nutrition" width="22" height="22">
+      </a>
+      <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+        <img src="{% static 'img/goals_icon.png' %}" alt="Goals" width="22" height="22">
+      </a>
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
+        <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
+      </a>
+      <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon active" data-tooltip="Chats">
+        <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
+      </a>
+      <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
+        <img src="{% static 'img/consent_icon.png' %}" alt="Consent" width="22" height="22">
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Settings">
+        <img src="{% static 'img/settings_icon.png' %}" alt="Settings" width="22" height="22">
+      </a>
+      <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+        <img src="{% static 'img/logout_icon.png' %}" alt="Logout" width="22" height="22">
+      </a>
+    </nav>
+
+    <main class="main-content">
+      <div class="chat-shell">
+        <section class="chat-sidebar">
+          <div class="chat-sidebar-header">
+            <h5 class="mb-0">Chats</h5>
+          </div>
+          <button class="btn btn-light btn-sm chat-new-btn mt-2" type="button">
+            + New chat
+          </button>
+          <div class="chat-history-list mt-3">
+            <!-- Placeholder; will be populated in later steps -->
+            <div class="text-muted small">
+              Recent conversations will appear here.
+            </div>
+          </div>
+        </section>
+
+        <section class="chat-main">
+          <header class="chat-header">
+            <h5>New conversation</h5>
+          </header>
+
+          <div class="chat-body" id="chatBody">
+            <div class="chat-empty" id="chatEmpty">
+              <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🤖</div>
+              <h6 class="fw-semibold mb-1">Ask anything about your health data</h6>
+              <p class="mb-0" style="font-size: 0.9rem;">
+                For example: “Why am I getting so many reminders about hydration?”<br>
+                or “Help me plan tomorrow’s meals based on my usual calories.”
+              </p>
+            </div>
+          </div>
+
+          <footer class="chat-input-container">
+            <div class="chat-input-wrapper">
+              <textarea
+                class="chat-input"
+                id="chatInput"
+                rows="1"
+                placeholder="Type your message..."
+              ></textarea>
+              <button class="btn btn-primary chat-send-btn" id="chatSendBtn" type="button">
+                Send
+              </button>
+            </div>
+            <p class="text-muted text-center mt-2 mb-0" style="font-size: 0.75rem;">
+              ⚠️ This chat is for educational purposes only and is not medical advice. Please consult your doctor for medical decisions.
+            </p>
+          </footer>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // --- CSRF helper (same pattern as other dashboards) ---
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // --- Simple in-page chat state ---
+    let conversations = [];
+    let currentConversationId = null;
+    let isProcessing = false;
+
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    const chatBody = document.getElementById('chatBody');
+    const chatEmpty = document.getElementById('chatEmpty');
+    const historyList = document.querySelector('.chat-history-list');
+    const newChatBtn = document.querySelector('.chat-new-btn');
+    const chatHeaderTitle = document.querySelector('.chat-header h5');
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function getCurrentConversation() {
+      return conversations.find(c => c.id === currentConversationId) || null;
+    }
+
+    function renderChatHistory() {
+      if (!historyList) return;
+      if (!conversations.length) {
+        historyList.innerHTML = '<div class="text-muted small">Recent conversations will appear here.</div>';
+        return;
+      }
+      historyList.innerHTML = conversations.map(conv => `
+        <div class="chat-history-item ${conv.id === currentConversationId ? 'active' : ''}"
+             data-id="${conv.id}">
+          ${escapeHtml(conv.title || 'Conversation')}
+        </div>
+      `).join('');
+    }
+
+    function renderMessages() {
+      const conv = getCurrentConversation();
+      if (!conv || !conv.messages.length) {
+        chatBody.innerHTML = '';
+        chatBody.appendChild(chatEmpty);
+        return;
+      }
+
+      chatBody.innerHTML = conv.messages.map(msg => `
+        <div class="chat-message ${msg.role}">
+          <div class="chat-message-role">
+            ${msg.role === 'user' ? 'You' : 'Assistant'}
+          </div>
+          <div class="chat-message-content">
+            ${escapeHtml(msg.content)}
+          </div>
+        </div>
+      `).join('');
+
+      if (isProcessing) {
+        chatBody.innerHTML += `
+          <div class="chat-message assistant">
+            <div class="chat-message-role">Assistant</div>
+            <div class="chat-message-content">
+              Thinking<span class="loading-dots">...</span>
+            </div>
+          </div>
+        `;
+      }
+
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function startNewChat() {
+      const id = String(Date.now());
+      currentConversationId = id;
+      conversations.push({
+        id,
+        sessionId: null,   // server-side session_id from API will be stored here
+        title: 'New conversation',
+        messages: []
+      });
+      chatHeaderTitle.textContent = 'New conversation';
+      renderChatHistory();
+      renderMessages();
+    }
+
+    function selectConversation(id) {
+      currentConversationId = id;
+      const conv = getCurrentConversation();
+      chatHeaderTitle.textContent = conv?.title || 'Conversation';
+      renderChatHistory();
+      renderMessages();
+    }
+
+    async function sendMessage() {
+      if (isProcessing) return;
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      if (!currentConversationId) {
+        startNewChat();
+      }
+      const conv = getCurrentConversation();
+      if (!conv) return;
+
+      // Add user message
+      conv.messages.push({ role: 'user', content: message });
+
+      // First message sets title
+      if (conv.messages.length === 1) {
+        conv.title = message.length > 50 ? message.slice(0, 50) + '…' : message;
+        chatHeaderTitle.textContent = conv.title;
+      }
+
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      isProcessing = true;
+      chatSendBtn.disabled = true;
+      chatInput.disabled = true;
+
+      renderChatHistory();
+      renderMessages();
+
+      try {
+        const payload = {
+          message: message,
+          session_id: conv.sessionId || null,
+          days_to_analyze: 7
+        };
+
+        const response = await fetch('/api/agent/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken || ''
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Persist session_id for this conversation so server history stays linked
+        if (data.session_id) {
+          conv.sessionId = data.session_id;
+        }
+
+        // Strip disclaimer text from the chat bubble (it's shown once on the page instead)
+        let aiText = data.response || 'No response received.';
+        const disclaimer = "⚠️ **Disclaimer**: This information is for educational purposes only. Consider discussing this with your doctor before making significant health changes.";
+        aiText = aiText.replace(disclaimer, "").trim();
+
+        conv.messages.push({ role: 'assistant', content: aiText });
+      } catch (err) {
+        console.error('Chat error:', err);
+        conv.messages.push({
+          role: 'assistant',
+          content: 'Sorry, there was an error processing your request. Please try again.'
+        });
+      } finally {
+        isProcessing = false;
+        chatSendBtn.disabled = false;
+        chatInput.disabled = false;
+        chatInput.focus();
+        renderChatHistory();
+        renderMessages();
+      }
+    }
+
+    // Auto-resize textarea
+    chatInput.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Enter to send, Shift+Enter for newline
+    chatInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    chatSendBtn.addEventListener('click', sendMessage);
+    newChatBtn.addEventListener('click', startNewChat);
+
+    // Click on history item
+    historyList.addEventListener('click', function (e) {
+      const item = e.target.closest('.chat-history-item');
+      if (!item) return;
+      const id = item.getAttribute('data-id');
+      if (id) {
+        selectConversation(id);
+      }
+    });
+
+    // Initial render (empty state)
+    renderChatHistory();
+    renderMessages();
+  </script>
+</body>
+</html>

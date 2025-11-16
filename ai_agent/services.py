@@ -119,11 +119,12 @@ class ContextBuilder:
         context_parts = []
         calculations = {}
         has_complete_profile = False
-        
+
+        # ----------------------------
         # Profile information
+        # ----------------------------
+        profile_info = []
         if self.profile:
-            profile_info = []
-            
             if self.profile.age:
                 profile_info.append(f"Age: {self.profile.age} years")
             if self.profile.weight_kg:
@@ -134,13 +135,14 @@ class ContextBuilder:
                 profile_info.append(f"Sex: {self.profile.get_sex_display()}")
             if self.profile.activity_level:
                 profile_info.append(f"Activity Level: {self.profile.get_activity_level_display()}")
-            
+
             if profile_info:
                 context_parts.append("**User Profile:**")
                 context_parts.append("\n".join(profile_info))
                 has_complete_profile = True
             else:
                 context_parts.append("**User Profile:** Incomplete profile data available.")
+        profile_summary = "\n".join(profile_info) if profile_info else "Profile information is incomplete."
         
         # Health metrics calculations
         if has_complete_profile:
@@ -163,30 +165,59 @@ class ContextBuilder:
                 context_parts.append(f"- Recommended Daily Protein Target: {protein_target:.1f} grams/day")
                 context_parts.append(f"- Activity Level: {activity_level}")
         
-        # Nutrition data
+        # ----------------------------
+        # Nutrition data summary
+        # ----------------------------
+        health_lines = []
         if nutrition_data and nutrition_data.get('has_data'):
             context_parts.append(f"\n**Recent Nutrition Data (Last {nutrition_data['days_analyzed']} days):**")
             context_parts.append(f"- Average Daily Calories: {nutrition_data['average_calories']:.1f} kcal")
-            
-            if nutrition_data.get('average_protein'):
+
+            if nutrition_data.get('average_protein') is not None:
                 context_parts.append(f"- Average Daily Protein: {nutrition_data['average_protein']:.1f} g")
-            if nutrition_data.get('average_carbs'):
+            if nutrition_data.get('average_carbs') is not None:
                 context_parts.append(f"- Average Daily Carbs: {nutrition_data['average_carbs']:.1f} g")
-            if nutrition_data.get('average_fat'):
+            if nutrition_data.get('average_fat') is not None:
                 context_parts.append(f"- Average Daily Fat: {nutrition_data['average_fat']:.1f} g")
-            
-            context_parts.append(f"- Logging Consistency: {nutrition_data['logging_consistency']:.1f}% ({nutrition_data['days_with_entries']} out of {nutrition_data['days_analyzed']} days)")
+
+            context_parts.append(
+                f"- Logging Consistency: {nutrition_data['logging_consistency']:.1f}% "
+                f"({nutrition_data['days_with_entries']} out of {nutrition_data['days_analyzed']} days)"
+            )
+
+            health_lines.append(
+                f"Average daily calories over the last {nutrition_data['days_analyzed']} days: "
+                f"{nutrition_data['average_calories']:.1f} kcal."
+            )
+            if nutrition_data.get('average_protein') is not None:
+                health_lines.append(f"Average daily protein: {nutrition_data['average_protein']:.1f} g.")
+            if nutrition_data.get('average_carbs') is not None:
+                health_lines.append(f"Average daily carbs: {nutrition_data['average_carbs']:.1f} g.")
+            if nutrition_data.get('average_fat') is not None:
+                health_lines.append(f"Average daily fat: {nutrition_data['average_fat']:.1f} g.")
+            health_lines.append(
+                f"Logging consistency: {nutrition_data['logging_consistency']:.1f}% "
+                f"({nutrition_data['days_with_entries']} of {nutrition_data['days_analyzed']} days)."
+            )
         elif nutrition_data:
             context_parts.append("\n**Nutrition Data:** No nutrition data available for analysis.")
-        
-        # Active reminders
+            health_lines.append("No recent nutrition data is available.")
+        else:
+            health_lines.append("No recent nutrition data is available.")
+
+        health_summary = "\n".join(health_lines)
+
+        # ----------------------------
+        # Active reminders (summary + detailed list)
+        # ----------------------------
         active_reminders = []
+        reminders_summary_lines = []
         if include_reminders:
             reminders = HealthReminder.objects.filter(
                 user=self.user,
                 dismissed_at__isnull=True
             ).order_by('-priority', '-created_at')[:5]  # Limit to 5 most recent
-            
+
             if reminders.exists():
                 context_parts.append("\n**Active Health Reminders:**")
                 for reminder in reminders:
@@ -196,7 +227,11 @@ class ContextBuilder:
                     if reminder.actionable_steps:
                         reminder_info += f"\n  Actionable Steps: {', '.join(reminder.actionable_steps[:3])}"
                     context_parts.append(reminder_info)
-                    
+
+                    reminders_summary_lines.append(
+                        f"- {reminder.title} ({reminder.get_priority_display()} priority): {reminder.message}"
+                    )
+
                     active_reminders.append({
                         'title': reminder.title,
                         'message': reminder.message,
@@ -205,14 +240,23 @@ class ContextBuilder:
                         'type': reminder.reminder_type,
                         'actionable_steps': reminder.actionable_steps,
                     })
+            else:
+                reminders_summary_lines.append("No active reminders.")
+        else:
+            reminders_summary_lines.append("No active reminders.")
+
+        reminders_summary = "\n".join(reminders_summary_lines)
         
         context_string = "\n".join(context_parts)
-        
+
         return {
             "context": context_string,
             "calculations": calculations,
             "has_complete_profile": has_complete_profile,
             "active_reminders": active_reminders,
+            "profile_summary": profile_summary,
+            "health_summary": health_summary,
+            "reminders_summary": reminders_summary,
         }
 
 
@@ -341,48 +385,90 @@ class AIAgentService:
         
         return any(keyword in message_lower for keyword in reminder_keywords)
 
-    def _build_system_prompt(self, user_context, is_reminder_query=False):
+    def _is_casual_message(self, message: str) -> bool:
+        """
+        Very simple heuristic to detect greetings / small talk.
+        """
+        if not message:
+            return False
+        text = message.strip().lower()
+        short = len(text) <= 25
+
+        casual_phrases = [
+            "hi", "hey", "hello", "yo", "good morning", "good evening",
+            "what's up", "whats up", "how are you", "how's it going",
+            "how are you doing"
+        ]
+
+        return short and any(text == p or text.startswith(p) for p in casual_phrases)
+
+    def _build_system_prompt(self, user_context, is_reminder_query=False, is_casual=False):
         """
         Build the system prompt for Gemini API.
-        
+
         Args:
             user_context: Context dict from ContextBuilder
             is_reminder_query: Whether user is asking about reminders
-        
+            is_casual: Whether the message looks like casual small talk / greeting
+
         Returns:
             str: System prompt
         """
+        profile_summary = user_context.get("profile_summary", "Profile information is incomplete.")
+        health_summary = user_context.get("health_summary", "")
+        reminders_summary = user_context.get("reminders_summary", "No active reminders.")
+
         prompt_parts = [
-            "You are a helpful AI health assistant for CareU, a personalized health tracking application.",
-            "Your role is to provide personalized health recommendations based on the user's actual data.",
+            "You are a friendly AI health assistant for CareU, a personalized health tracking app.",
             "",
-            "**IMPORTANT GUIDELINES:**",
-            "1. NEVER provide direct medical advice or diagnoses.",
-            "2. Always reference the user's actual data when making recommendations.",
-            "3. Use the user's profile information (age, weight, height, activity level) in your explanations.",
-            "4. Reference specific numbers from their nutrition data when relevant.",
-            "5. If data is incomplete, acknowledge this and provide general guidance.",
-            "6. Always be encouraging and supportive.",
-            "7. Include safety disclaimers in your responses (already added automatically).",
+            "**CONVERSATION STYLE:**",
+            "- Respond naturally to greetings and small talk WITHOUT forcing health data.",
+            "- Only dive into health metrics when the user asks specific questions.",
+            "- Be warm, encouraging, and human-like.",
+            "- Ask clarifying questions when needed.",
             "",
-            "**USER CONTEXT:**",
-            user_context['context'],
+            "**WHEN TO REFERENCE USER DATA:**",
+            "✅ User asks 'why this reminder?' → Explain that reminder using their data.",
+            "✅ User asks about nutrition/activity/sleep → Show relevant numbers from their data.",
+            "✅ User asks for advice → Base it on their profile (age, weight, activity level).",
+            "❌ User just says 'hi', 'hey', etc. → Greet them and ask how you can help, do NOT dump data.",
             "",
+            "**SAFETY RULES:**",
+            "- Never diagnose medical conditions or prescribe treatments.",
+            "- Suggest consulting healthcare providers for medical concerns.",
+            "- DO NOT include any disclaimer text; the system will add it automatically.",
+            "",
+            "**USER PROFILE:**",
+            profile_summary,
         ]
-        
-        if is_reminder_query and user_context.get('active_reminders'):
-            prompt_parts.append("**USER IS ASKING ABOUT THEIR HEALTH REMINDERS:**")
-            prompt_parts.append("Explain why they are receiving these reminders based on their actual data.")
-            prompt_parts.append("Reference specific numbers from their profile and nutrition data.")
-            prompt_parts.append("")
-        
-        prompt_parts.append(
-            "**RESPONSE FORMAT:**"
-            "Provide clear, personalized explanations that reference the user's actual data. "
-            "For example, instead of saying 'Your recommended protein intake is...', say "
-            "'Based on your 70kg weight and moderate activity level, your recommended protein intake is...'"
-        )
-        
+
+        # Only include more detailed data when it's actually useful
+        if not is_casual:
+            prompt_parts.extend([
+                "",
+                "**RECENT HEALTH DATA (only reference if relevant to the question):**",
+                health_summary,
+                "",
+                "**ACTIVE REMINDERS (only explain if the user asks about them):**",
+                reminders_summary,
+            ])
+
+        # Extra guidance for explicit reminder questions
+        if is_reminder_query:
+            prompt_parts.extend([
+                "",
+                "The user is asking about their reminders. Focus on explaining WHY they are seeing specific reminders,",
+                "and how they connect to the data described above. Do not invent sources that weren't provided.",
+            ])
+
+        prompt_parts.extend([
+            "",
+            "**RESPONSE STYLE:**",
+            "- Keep responses clear and concise.",
+            "- Avoid markdown headings; simple paragraphs and short lists are fine.",
+            "- Speak directly to the user ('you') and keep a conversational tone.",
+        ])
+
         return "\n".join(prompt_parts)
 
     def process_message(self, message, session_id=None, days_to_analyze=7):
@@ -415,16 +501,20 @@ class AIAgentService:
             
             # Build user context
             is_reminder_query = self._detect_reminder_query(message)
-            # Always include reminders in context (AI should know about them)
-            # But emphasize them more if user is asking about reminders
+            is_casual = self._is_casual_message(message)
+
+            # Always include reminders in context so the model can use them when needed,
+            # but the prompt will control when they are referenced.
             user_context = self.context_builder.build_user_context(
                 nutrition_data=nutrition_data,
-                include_reminders=True  # Always include reminders for context
+                include_reminders=True
             )
-            
-            # Build system prompt
+
+            # Build system prompt (different behavior for casual chat vs data questions)
             system_prompt = self._build_system_prompt(
-                user_context, is_reminder_query=is_reminder_query
+                user_context,
+                is_reminder_query=is_reminder_query,
+                is_casual=is_casual,
             )
             
             # Get conversation history
@@ -468,8 +558,12 @@ class AIAgentService:
                     "error": result['error']
                 }
             
-            # Add safety disclaimer to response
-            response_text = result['response'] + SAFETY_DISCLAIMER
+            # Add safety disclaimer to response.
+            # First strip any disclaimer text the model may have added itself,
+            # then append a single standardized disclaimer.
+            raw_text = result['response'] or ""
+            cleaned_text = raw_text.replace(SAFETY_DISCLAIMER, "").strip()
+            response_text = cleaned_text + SAFETY_DISCLAIMER
             
             # Save user message
             self.conversation_manager.save_message(

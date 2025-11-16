@@ -28,7 +28,7 @@ from .serializers import (
 )
 from .forms import NutritionEntryForm, GoalForm
 from .reminders_engine import ReminderEngine
-from ai_agent.services import AIAgentService
+from ai_agent.services import AIAgentService, SAFETY_DISCLAIMER
 
 
 logger = logging.getLogger(__name__)
@@ -340,8 +340,11 @@ def reminders_dashboard(request):
                 days_to_analyze=7,
             )
             if not result.get("error") and result.get("response"):
-                # Trim to a short length for the sidebar (approx. 1-2 lines)
-                daily_ai_insight = result["response"].strip()[:160]
+                # Use the full AI insight but strip the safety disclaimer for this sidebar box
+                text = result["response"].strip()
+                if SAFETY_DISCLAIMER in text:
+                    text = text.replace(SAFETY_DISCLAIMER, "").strip()
+                daily_ai_insight = text
     except Exception as e:
         # Log but don't break the page if AI insight fails
         logger.warning(f"Failed to generate daily AI insight: {e}")

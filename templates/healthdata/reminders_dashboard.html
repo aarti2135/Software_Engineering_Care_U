@@ -497,7 +497,7 @@
       <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
         <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
       </a>
-      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics" id="nav-analytics">
         <img src="{% static 'img/analytics_icon.png' %}" alt="Analytics" width="22" height="22">
       </a>
       <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Nutrition">
@@ -506,10 +506,10 @@
       <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
         <img src="{% static 'img/goals_icon.png' %}" alt="Goals" width="22" height="22">
       </a>
-      <a href="{% url 'reminders_dashboard' %}" class="nav-icon active" data-tooltip="Reminders">
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon active" data-tooltip="Reminders" id="nav-reminders">
         <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
       </a>
-      <a href="#" class="nav-icon" data-tooltip="Chats">
+      <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon" data-tooltip="Chats">
         <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
       </a>
       <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
@@ -585,11 +585,7 @@
 
             <div class="collapse why-content" id="why-{{ reminder.id }}">
               <div class="why-content-inner" id="why-content-{{ reminder.id }}" data-ai-loaded="false">
-                {% if reminder.explanation %}
-                  {{ reminder.explanation|linebreaks }}
-                {% else %}
-                  <p class="text-muted mb-0"><em>AI will generate a personalized explanation when you open this section.</em></p>
-                {% endif %}
+                <p class="text-muted mb-0"><em>AI will generate a personalized explanation when you open this section.</em></p>
               </div>
             </div>
           </div>
@@ -962,7 +958,7 @@
     }
   }
 
-  // Trigger AI load when user clicks either "Why this matters" or "What you can do"
+  // Trigger AI load when user clicks either "Why this matters" or "Logout	"
   document.querySelectorAll('.why-toggle').forEach(btn => {
     btn.addEventListener('click', function() {
       const reminderId = this.dataset.reminderId;
