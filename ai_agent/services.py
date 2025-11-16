@@ -44,7 +44,7 @@ class HealthDataAggregator:
         Returns:
             dict: Aggregated nutrition data with averages and totals
         """
-        ays = min(days, 30)d  # Cap at 30 days
+        days = min(days, 30)  # Cap at 30 days
         start_date = timezone.localdate() - timedelta(days=days)
         
         entries = NutritionEntry.objects.filter(

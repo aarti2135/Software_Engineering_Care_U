@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
@@ -126,9 +127,10 @@
       position: relative;
     }
 
-    .nav-icon:hover, .nav-icon.active {
-      background: var(--primary);
-      color: white;
+    .nav-icon:hover,
+    .nav-icon.active {
+      background: #e5e5ea; /* subtle grey highlight */
+      color: var(--text-primary);
     }
 
     .nav-icon:hover::after {
@@ -161,7 +163,7 @@
       justify-content: center;
       color: white;
       font-weight: 600;
-      margin-bottom: 1rem;
+      margin: 0 auto 1.5rem auto; /* center horizontally, add spacing below */
     }
 
     .user-info {
@@ -487,30 +489,37 @@
 
     <!-- Left Sidebar -->
     <nav class="sidebar-left">
-      <div>
-        <div class="user-avatar">
-          {{ request.user.username|first|upper }}
-        </div>
-        <div class="user-info">{{ request.user.username }}</div>
+      <div class="user-avatar">
+        {{ request.user.username|first|upper }}
       </div>
 
-      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Home">
-        <i>🏠</i>
+      <!-- Standardized nav order: Home, Analytics, Nutrition, Goals, Reminders, Chats, Consent, Settings, Logout -->
+      <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+        <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
       </a>
-      <a href="#" class="nav-icon" data-tooltip="Goals">
-        <i>🎯</i>
+      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+        <img src="{% static 'img/analytics_icon.png' %}" alt="Analytics" width="22" height="22">
       </a>
-      <a href="#" class="nav-icon" data-tooltip="Chat">
-        <i>💬</i>
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Nutrition">
+        <img src="{% static 'img/nutrition_icon.png' %}" alt="Nutrition" width="22" height="22">
       </a>
-      <a href="#" id="nav-analytics" class="nav-icon" data-tooltip="Analytics">
-     <i>📊</i>
-     </a>
-     <a href="#" id="nav-reminders" class="nav-icon active" data-tooltip="Reminders">
-     <i>🔔</i>
-     </a>
+      <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+        <img src="{% static 'img/goals_icon.png' %}" alt="Goals" width="22" height="22">
+      </a>
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon active" data-tooltip="Reminders">
+        <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Chats">
+        <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
+      </a>
+      <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
+        <img src="{% static 'img/consent_icon.png' %}" alt="Consent" width="22" height="22">
+      </a>
       <a href="#" class="nav-icon" data-tooltip="Settings">
-        <i>⚙️</i>
+        <img src="{% static 'img/settings_icon.png' %}" alt="Settings" width="22" height="22">
+      </a>
+      <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+        <img src="{% static 'img/logout_icon.png' %}" alt="Logout" width="22" height="22">
       </a>
     </nav>
 
@@ -536,8 +545,7 @@
       </div>
 
       <!-- Reminder Cards -->
-      <!-- Reminder Cards -->
-        <section id="reminders-box">
+      <section id="reminders-box">
       <h4 class="fw-semibold mb-3">Today's Health Insights</h4>
 
       {% if reminders %}
@@ -555,34 +563,38 @@
             </div>
           </div>
 
-          <!-- Why This Matters - Collapsible -->
+          <!-- Why This Matters - Collapsible (AI-powered) -->
           <div class="why-matters">
             <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
-              <button class="why-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#why-{{ reminder.id }}" aria-expanded="false" aria-controls="why-{{ reminder.id }}">
+              <button
+                class="why-toggle"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#why-{{ reminder.id }}"
+                aria-expanded="false"
+                aria-controls="why-{{ reminder.id }}"
+                data-reminder-id="{{ reminder.id }}"
+                data-reminder-title="{{ reminder.title }}"
+              >
                 <span>Why this matters</span>
                 <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
                 </svg>
               </button>
-              <button class="btn-ai-explanation" type="button" data-reminder-id="{{ reminder.id }}" data-reminder-title="{{ reminder.title }}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s;">
-                <span class="ai-btn-text">🤖 Get AI Explanation</span>
-                <span class="ai-btn-loading" style="display: none;">⏳ Generating...</span>
-              </button>
             </div>
 
             <div class="collapse why-content" id="why-{{ reminder.id }}">
-              <div class="why-content-inner" id="why-content-{{ reminder.id }}">
+              <div class="why-content-inner" id="why-content-{{ reminder.id }}" data-ai-loaded="false">
                 {% if reminder.explanation %}
                   {{ reminder.explanation|linebreaks }}
                 {% else %}
-                  <p class="text-muted">Click "Get AI Explanation" to learn why this reminder is important for you.</p>
+                  <p class="text-muted mb-0"><em>AI will generate a personalized explanation when you open this section.</em></p>
                 {% endif %}
               </div>
             </div>
           </div>
 
-          <!-- What You Can Do - Collapsible -->
-          {% if reminder.actionable_steps %}
+          <!-- What You Can Do - Collapsible (AI-powered only, no hardcoded steps) -->
           <div class="actionable-steps">
             <button class="steps-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#steps-{{ reminder.id }}" aria-expanded="false" aria-controls="steps-{{ reminder.id }}">
               <span>What you can do</span>
@@ -592,16 +604,11 @@
             </button>
 
             <div class="collapse steps-content" id="steps-{{ reminder.id }}">
-              <div class="action-steps">
-                <ul>
-                  {% for step in reminder.actionable_steps %}
-                    <li>{{ step }}</li>
-                  {% endfor %}
-                </ul>
+              <div class="action-steps" id="steps-content-{{ reminder.id }}">
+                <p class="text-muted mb-0"><em>AI will suggest a few concrete next steps for you.</em></p>
               </div>
             </div>
           </div>
-          {% endif %}
 
           <!-- Actions -->
           <div class="reminder-actions">
@@ -652,7 +659,27 @@
       <div class="ai-insight">
         <div class="icon">🤖</div>
         <h6 class="fw-semibold">AI Insight</h6>
-        <p class="small mb-0">"Consistent small improvements lead to lasting health changes. Celebrate your progress today!"</p>
+        {% if daily_ai_insight %}
+          <p class="small mb-1">
+            <span class="ai-insight-short">
+              {{ daily_ai_insight|truncatechars:140 }}
+            </span>
+            <span class="ai-insight-full d-none">
+              {{ daily_ai_insight }}
+            </span>
+          </p>
+          {% if daily_ai_insight|length > 140 %}
+            <button
+              type="button"
+              class="btn btn-link p-0 small text-light text-decoration-none ai-insight-toggle"
+              style="font-size: 0.75rem;"
+            >
+              Show more ▾
+            </button>
+          {% endif %}
+        {% else %}
+          <p class="small mb-0">"Consistent small improvements lead to lasting health changes. Celebrate your progress today!"</p>
+        {% endif %}
       </div>
     </aside>
 
@@ -846,70 +873,135 @@
     boxReminders.classList.remove('d-none');
   });
 
-  // AI Explanation functionality
-  document.querySelectorAll('.btn-ai-explanation').forEach(btn => {
-    btn.addEventListener('click', async function() {
+  async function loadAiExplanation(reminderId, reminderTitle) {
+    const whyContentDiv = document.getElementById(`why-content-${reminderId}`);
+    const stepsContentDiv = document.getElementById(`steps-content-${reminderId}`);
+
+    // Only fetch once per reminder
+    if (!whyContentDiv || whyContentDiv.dataset.aiLoaded === 'true') {
+      return;
+    }
+    whyContentDiv.dataset.aiLoaded = 'true';
+
+    // Show loading message in the Why section (even if collapsed)
+    whyContentDiv.innerHTML = '<p class="text-muted"><em>🤖 AI is analyzing your data and generating a personalized explanation...</em></p>';
+
+    try {
+      const response = await fetch('/api/agent/chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken || ''
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          message: `For the reminder titled "${reminderTitle}", 1) explain in a few sentences why this matters based on my recent health data, and 2) suggest 3-5 very concrete action steps I can take. Respond ONLY in JSON with keys "why" (string) and "steps" (array of strings).`,
+          days_to_analyze: 7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Try to extract and parse the AI response as JSON
+      let parsed = null;
+      try {
+        let raw = data.response || '';
+        // Remove the safety disclaimer if present (we don't need it here)
+        raw = raw.replace(
+          '⚠️ **Disclaimer**: This information is for educational purposes only. Consider discussing this with your doctor before making significant health changes.',
+          ''
+        );
+        // Extract the JSON portion between the first '{' and last '}'
+        const start = raw.indexOf('{');
+        const end = raw.lastIndexOf('}');
+        if (start !== -1 && end !== -1 && end > start) {
+          const jsonText = raw.slice(start, end + 1);
+          parsed = JSON.parse(jsonText);
+        } else {
+          // Fallback: try parsing the whole string
+          parsed = JSON.parse(raw);
+        }
+      } catch (e) {
+        console.warn('AI response was not valid JSON, falling back to raw text.');
+      }
+
+      if (parsed && parsed.why) {
+        whyContentDiv.innerHTML = `<div style="white-space: pre-wrap; line-height: 1.6;">${parsed.why}</div>`;
+      } else {
+        // Fallback: show raw response
+        whyContentDiv.innerHTML = `<div style="white-space: pre-wrap; line-height: 1.6;">${data.response}</div>`;
+      }
+
+      if (stepsContentDiv) {
+        if (parsed && Array.isArray(parsed.steps) && parsed.steps.length) {
+          const items = parsed.steps
+            .map(step => `<li>${step}</li>`)
+            .join('');
+          stepsContentDiv.innerHTML = `<ul>${items}</ul>`;
+        } else {
+          // If we didn't get structured steps, keep whatever was there or show a gentle message
+          if (!stepsContentDiv.innerHTML.trim()) {
+            stepsContentDiv.innerHTML = '<p class="text-muted mb-0"><em>No specific action steps were generated.</em></p>';
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('Error getting AI explanation:', error);
+      whyContentDiv.innerHTML = `<div class="alert alert-warning" style="margin: 0;">
+        <strong>Unable to generate AI explanation.</strong><br>
+        <small>${error.message || 'Please try again later or check the static explanation.'}</small>
+      </div>`;
+    }
+  }
+
+  // Trigger AI load when user clicks either "Why this matters" or "What you can do"
+  document.querySelectorAll('.why-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
       const reminderId = this.dataset.reminderId;
       const reminderTitle = this.dataset.reminderTitle;
-      const contentDiv = document.getElementById(`why-content-${reminderId}`);
-      const collapseElement = document.getElementById(`why-${reminderId}`);
-      const btnText = this.querySelector('.ai-btn-text');
-      const btnLoading = this.querySelector('.ai-btn-loading');
-      
-      // Show loading state
-      btnText.style.display = 'none';
-      btnLoading.style.display = 'inline';
-      this.disabled = true;
-      this.style.opacity = '0.6';
-      
-      // Ensure the collapse is open
-      if (!collapseElement.classList.contains('show')) {
-        const bsCollapse = new bootstrap.Collapse(collapseElement, { toggle: true });
+      loadAiExplanation(reminderId, reminderTitle);
+    });
+  });
+
+  document.querySelectorAll('.steps-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const reminderId = this.closest('.reminder-card').querySelector('.why-toggle')?.dataset.reminderId;
+      const reminderTitle = this.closest('.reminder-card').querySelector('.why-toggle')?.dataset.reminderTitle;
+      if (reminderId && reminderTitle) {
+        loadAiExplanation(reminderId, reminderTitle);
       }
-      
-      // Show loading message
-      contentDiv.innerHTML = '<p class="text-muted"><em>🤖 AI is analyzing your data and generating a personalized explanation...</em></p>';
-      
-      try {
-        // Call AI API
-        const response = await fetch('/api/agent/chat/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken || ''
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({
-            message: `Why am I getting this reminder: "${reminderTitle}"? Please explain based on my actual health data.`,
-            days_to_analyze: 7
-          })
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        
-        // Display AI-generated explanation
-        contentDiv.innerHTML = `<div style="white-space: pre-wrap; line-height: 1.6;">${data.response}</div>`;
-        
-      } catch (error) {
-        console.error('Error getting AI explanation:', error);
-        contentDiv.innerHTML = `<div class="alert alert-warning" style="margin: 0;">
-          <strong>Unable to generate AI explanation.</strong><br>
-          <small>${error.message || 'Please try again later or check the static explanation above.'}</small>
-        </div>`;
-      } finally {
-        // Reset button state
-        btnText.style.display = 'inline';
-        btnLoading.style.display = 'none';
-        this.disabled = false;
-        this.style.opacity = '1';
+    });
+  });
+
+  // Toggle AI Insight expand/collapse in the sidebar box
+  document.querySelectorAll('.ai-insight-toggle').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const container = this.closest('.ai-insight');
+      if (!container) return;
+
+      const shortEl = container.querySelector('.ai-insight-short');
+      const fullEl = container.querySelector('.ai-insight-full');
+      if (!shortEl || !fullEl) return;
+
+      const isExpanded = !fullEl.classList.contains('d-none');
+      if (isExpanded) {
+        // Collapse back to short view
+        fullEl.classList.add('d-none');
+        shortEl.classList.remove('d-none');
+        this.textContent = 'Show more ▾';
+      } else {
+        // Expand to full text
+        shortEl.classList.add('d-none');
+        fullEl.classList.remove('d-none');
+        this.textContent = 'Show less ▴';
       }
     });
   });

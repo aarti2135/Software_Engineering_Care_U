@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import csv
 import io
+import logging
 
 # ---------- DRF ----------
 from rest_framework import viewsets, permissions, status
@@ -27,7 +28,10 @@ from .serializers import (
 )
 from .forms import NutritionEntryForm, GoalForm
 from .reminders_engine import ReminderEngine
+from ai_agent.services import AIAgentService
 
+
+logger = logging.getLogger(__name__)
 
 # ----------------------------------------------------------------------
 # 🔹 API ViewSets
@@ -318,11 +322,36 @@ def reminders_dashboard(request):
             'has_data': has_data,
         })
 
+    # ------------------------------------------------------------------
+    # 🔹 AI Insight (short motivational text based on current reminders)
+    # ------------------------------------------------------------------
+    daily_ai_insight = None
+    try:
+        # Only try to generate an insight if there are active reminders
+        if reminders:
+            agent_service = AIAgentService(request.user)
+            result = agent_service.process_message(
+                message=(
+                    "Give 1-2 very short, friendly sentences encouraging the user "
+                    "based on their current health reminders. Focus on positive, "
+                    "non-medical guidance (e.g., consistency with logging, balanced "
+                    "nutrition, staying active, hydration, and sleep). Keep it brief."
+                ),
+                days_to_analyze=7,
+            )
+            if not result.get("error") and result.get("response"):
+                # Trim to a short length for the sidebar (approx. 1-2 lines)
+                daily_ai_insight = result["response"].strip()[:160]
+    except Exception as e:
+        # Log but don't break the page if AI insight fails
+        logger.warning(f"Failed to generate daily AI insight: {e}")
+
     return render(request, "healthdata/reminders_dashboard.html", {
         "reminders": reminders,
         "dismissed_reminders": dismissed_reminders,
         "acted_upon_count": sum(1 for r in reminders if r.acted_upon),
         "week_days": week_days,
+        "daily_ai_insight": daily_ai_insight,
     })
 
 

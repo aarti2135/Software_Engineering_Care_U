@@ -80,8 +80,8 @@
 
     .nav-icon:hover,
     .nav-icon.active {
-      background: var(--primary);
-      color: white;
+      background: #e5e5ea; /* subtle grey highlight */
+      color: var(--text-primary);
     }
 
     .main-content {
@@ -136,11 +136,35 @@
     <!-- Sidebar -->
     <nav class="sidebar-left">
       <div class="user-avatar">{{ request.user.username|first|upper }}</div>
-      <a href="{% url 'home_dashboard' %}" class="nav-icon" data-tooltip="Home">🏠</a>
-      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon active" data-tooltip="Nutrition">🍎</a>
-      <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">🔔</a>
-      <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">📜</a>
-      <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">🚪</a>
+
+      <!-- Standardized nav order: Home, Analytics, Nutrition, Goals, Reminders, Chats, Consent, Settings, Logout -->
+      <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+        <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
+      </a>
+      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+        <img src="{% static 'img/analytics_icon.png' %}" alt="Analytics" width="22" height="22">
+      </a>
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon active" data-tooltip="Nutrition">
+        <img src="{% static 'img/nutrition_icon.png' %}" alt="Nutrition" width="22" height="22">
+      </a>
+      <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+        <img src="{% static 'img/goals_icon.png' %}" alt="Goals" width="22" height="22">
+      </a>
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
+        <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Chats">
+        <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
+      </a>
+      <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
+        <img src="{% static 'img/consent_icon.png' %}" alt="Consent" width="22" height="22">
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Settings">
+        <img src="{% static 'img/settings_icon.png' %}" alt="Settings" width="22" height="22">
+      </a>
+      <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+        <img src="{% static 'img/logout_icon.png' %}" alt="Logout" width="22" height="22">
+      </a>
     </nav>
 
     <!-- Main content -->

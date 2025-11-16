@@ -20,24 +20,33 @@ class GeminiClient:
     def __init__(self, api_key=None):
         """
         Initialize Gemini client with API key.
-        
+
         Args:
             api_key: Optional API key. If not provided, uses GEMINI_API_KEY from settings.
         """
+        # Use provided key or get from settings
         self.api_key = api_key or settings.GEMINI_API_KEY
         
         if not self.api_key:
-            raise ValueError("Gemini API key is required. Set GEMINI_API_KEY in your .env file.")
+            raise ValueError("Gemini API key is required. Set API_KEY in your .env file.")
         
-        # Configure the API
         genai.configure(api_key=self.api_key)
         
-        # Initialize the model (using gemini-pro for text generation)
+        # Use gemini-2.5-flash (available in free tier)
         try:
-            self.model = genai.GenerativeModel('gemini-pro')
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini model: {str(e)}")
-            raise
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            self.model_name = 'gemini-2.5-flash'
+            logger.info("Successfully initialized Gemini model: gemini-2.5-flash")
+        except:
+            # Fallback to alternative model names if that fails
+            try:
+                self.model = genai.GenerativeModel('gemini-pro')
+                self.model_name = 'gemini-pro'
+                logger.info("Successfully initialized Gemini model: gemini-pro")
+            except:
+                self.model = genai.GenerativeModel('gemini-1.5-flash')
+                self.model_name = 'gemini-1.5-flash'
+                logger.info("Successfully initialized Gemini model: gemini-1.5-flash")
 
     def generate_response(self, prompt, context_history=None, temperature=0.7):
         """
