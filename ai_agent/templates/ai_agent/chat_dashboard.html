@@ -398,6 +398,7 @@
     const newChatBtn = document.querySelector('.chat-new-btn');
     const chatHeaderTitle = document.querySelector('.chat-header h5');
 
+
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
@@ -456,9 +457,10 @@
     }
 
     function startNewChat() {
-      const id = String(Date.now());
+      // For new chats, use a temporary id until we get session_id from server
+      const id = 'new-' + String(Date.now());
       currentConversationId = id;
-      conversations.push({
+      conversations.unshift({  // Add to beginning of list
         id,
         sessionId: null,   // server-side session_id from API will be stored here
         title: 'New conversation',
@@ -529,6 +531,23 @@
 
         const data = await response.json();
 
+        // Check for API errors first
+        if (data.error) {
+          console.error('API returned error:', data.error, data.details);
+          throw new Error(data.error || 'Server returned an error');
+        }
+
+        // Check if response exists
+        if (!data.response) {
+          console.error('No response in data:', data);
+          throw new Error('No response received from server');
+        }
+
+        // Validate session_id exists
+        if (!data.session_id) {
+          console.warn('No session_id in response:', data);
+        }
+
         // Persist session_id for this conversation so server history stays linked
         if (data.session_id) {
           conv.sessionId = data.session_id;
@@ -536,15 +555,24 @@
 
         // Strip disclaimer text from the chat bubble (it's shown once on the page instead)
         let aiText = data.response || 'No response received.';
-        const disclaimer = "⚠️ **Disclaimer**: This information is for educational purposes only. Consider discussing this with your doctor before making significant health changes.";
-        aiText = aiText.replace(disclaimer, "").trim();
+        // Match the exact disclaimer format from backend (with or without newlines)
+        const disclaimerPattern = /⚠️ \*\*Disclaimer\*\*: This information is for educational purposes only\. Consider discussing this with your doctor before making significant health changes\./g;
+        aiText = aiText.replace(disclaimerPattern, "").trim();
 
         conv.messages.push({ role: 'assistant', content: aiText });
       } catch (err) {
         console.error('Chat error:', err);
+        const errorMsg = err.message || 'Unknown error';
+        // Only show user-friendly error, log full details to console
+        let userFriendlyError = 'Sorry, there was an error processing your request. Please try again.';
+        if (errorMsg.includes('HTTP 500') || errorMsg.includes('Server returned an error')) {
+          userFriendlyError = 'The AI service encountered an error. Please try again in a moment.';
+        } else if (errorMsg.includes('No response')) {
+          userFriendlyError = 'The AI service did not respond. Please try again.';
+        }
         conv.messages.push({
           role: 'assistant',
-          content: 'Sorry, there was an error processing your request. Please try again.'
+          content: userFriendlyError
         });
       } finally {
         isProcessing = false;

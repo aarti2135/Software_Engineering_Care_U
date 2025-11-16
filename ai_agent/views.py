@@ -93,14 +93,44 @@ class ChatAPIView(APIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-            # Return successful response
-            response_serializer = ChatResponseSerializer({
-                "response": result['response'],
-                "session_id": result['session_id'],
-                "metadata": result['metadata']
-            })
+            # Validate response data before serializing
+            if not result.get('response'):
+                logger.error(f"AI agent returned empty response for user {request.user.id}")
+                return Response(
+                    {
+                        "error": "AI service returned an empty response. Please try again.",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
-            return Response(response_serializer.data, status=status.HTTP_200_OK)
+            # Return successful response
+            try:
+                # Ensure session_id is a valid UUID string (not None or empty)
+                session_id_str = result.get('session_id')
+                if not session_id_str:
+                    logger.error(f"AI agent returned no session_id for user {request.user.id}")
+                    return Response(
+                        {
+                            "error": "AI service failed to create a session. Please try again.",
+                        },
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                
+                # Return response data (serializer is just for documentation, we return dict directly)
+                return Response({
+                    "response": result['response'],
+                    "session_id": session_id_str,
+                    "metadata": result.get('metadata', {})
+                }, status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.error(f"Error serializing response for user {request.user.id}: {str(e)}", exc_info=True)
+                return Response(
+                    {
+                        "error": "Failed to format response",
+                        "details": str(e) if request.user.is_staff else None
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
         except ValueError as e:
             # Missing API key or configuration error

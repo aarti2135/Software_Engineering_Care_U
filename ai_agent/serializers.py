@@ -31,10 +31,13 @@ class ChatResponseSerializer(serializers.Serializer):
         help_text="AI agent's response"
     )
     session_id = serializers.UUIDField(
-        help_text="Session ID for this conversation"
+        help_text="Session ID for this conversation",
+        required=True
     )
     metadata = serializers.DictField(
-        help_text="Metadata about data sources and calculations used"
+        help_text="Metadata about data sources and calculations used",
+        required=False,
+        allow_null=True
     )
 
 
