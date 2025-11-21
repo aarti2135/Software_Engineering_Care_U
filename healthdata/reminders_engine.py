@@ -453,7 +453,7 @@ class ReminderEngine:
             return None  # Can't check without target
 
         # Check if below 70% of target
-        if avg_protein < (target_protein * 0.7):
+        if avg_protein < (float(target_protein) * 0.7):
             # Avoid duplicate reminders
             existing = HealthReminder.objects.filter(
                 user=self.user,
@@ -465,7 +465,7 @@ class ReminderEngine:
             if existing:
                 return None
 
-            deficit = target_protein - avg_protein
+            deficit = float(target_protein) - float(avg_protein)
 
             reminder = HealthReminder.objects.create(
                 user=self.user,
@@ -473,8 +473,8 @@ class ReminderEngine:
                 title='Increase Your Protein Intake',
                 message=f'Your average protein intake is {avg_protein:.1f}g/day. Target: {target_protein:.0f}g/day based on your profile.',
                 explanation=self.explanation_gen.get_low_protein_explanation(
-                    avg_protein,
-                    target_protein,
+                    float(avg_protein),
+                    float(target_protein),
                     self.profile
                 ),
                 priority='medium',

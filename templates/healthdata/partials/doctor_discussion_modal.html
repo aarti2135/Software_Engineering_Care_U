@@ -1,0 +1,103 @@
+<!-- Doctor Discussion Topics Modal -->
+<div class="modal fade" id="doctorDiscussionModal" tabindex="-1" aria-labelledby="doctorDiscussionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 16px; border: 0;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #007AFF, #5856D6); color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title fw-bold" id="doctorDiscussionModalLabel">
+                    💬 Doctor Discussion Topics
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <!-- Loading State -->
+                <div id="discussionLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted fw-medium">Analyzing your health data...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="discussionError" class="alert alert-danger d-none" role="alert" style="border-radius: 12px;">
+                    <div class="d-flex align-items-start">
+                        <span style="font-size: 1.5rem; margin-right: 0.5rem;">⚠️</span>
+                        <div>
+                            <strong>Error</strong>
+                            <p class="mb-0" id="discussionErrorMessage"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content State -->
+                <div id="discussionContent" class="d-none">
+                    <!-- Disclaimer -->
+                    <div class="alert alert-info mb-4" style="border-radius: 12px; background: #E3F2FD; border: 1px solid #90CAF9;">
+                        <div class="d-flex align-items-start">
+                            <span style="font-size: 1.3rem; margin-right: 0.5rem;">ℹ️</span>
+                            <div>
+                                <strong>Important:</strong> <span id="discussionDisclaimer"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observations -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3" style="color: #007AFF;">
+                            📊 Observations from Your Data
+                        </h6>
+                        <ul id="discussionObservations" class="list-group" style="border: 0;">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <!-- Questions to Ask -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3" style="color: #34C759;">
+                            ❓ Questions to Ask Your Doctor
+                        </h6>
+                        <ul id="discussionQuestions" class="list-group" style="border: 0;">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <!-- Context -->
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-3" style="color: #FF9500;">
+                            💡 Additional Context
+                        </h6>
+                        <ul id="discussionContext" class="list-group" style="border: 0;">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #E5E5EA;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">Close</button>
+                <button type="button" class="btn btn-primary" id="exportDiscussionBtn" disabled style="border-radius: 10px;">
+                    📥 Export as Text
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #discussionObservations .list-group-item,
+    #discussionQuestions .list-group-item,
+    #discussionContext .list-group-item {
+        border: 1px solid #E5E5EA;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+
+    #discussionObservations .list-group-item:hover,
+    #discussionQuestions .list-group-item:hover,
+    #discussionContext .list-group-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        transition: all 0.2s ease;
+    }
+</style>

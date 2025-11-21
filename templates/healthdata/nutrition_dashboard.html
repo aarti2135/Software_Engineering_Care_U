@@ -80,7 +80,7 @@
 
     .nav-icon:hover,
     .nav-icon.active {
-      background: #e5e5ea; /* subtle grey highlight */
+      background: #e5e5ea;
       color: var(--text-primary);
     }
 
@@ -129,6 +129,22 @@
     .pro-compact .peek-card{border:1px solid #e5e7eb;border-radius:12px;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.05);}
     .pro-compact .peek-body{padding:12px 14px;}
     .pro-compact .peek-title{font-weight:700;font-size:.95rem;}
+
+    /* 🔹 Doctor Discussion Button Styling */
+    .doctor-discussion-card {
+      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+      border: 1px solid #90CAF9;
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,122,255,0.1);
+    }
+
+    .doctor-discussion-card:hover {
+      box-shadow: 0 6px 20px rgba(0,122,255,0.15);
+      transform: translateY(-2px);
+      transition: all 0.2s ease;
+    }
   </style>
 </head>
 <body>
@@ -137,7 +153,6 @@
     <nav class="sidebar-left">
       <div class="user-avatar">{{ request.user.username|first|upper }}</div>
 
-      <!-- Standardized nav order: Home, Analytics, Nutrition, Goals, Reminders, Chats, Consent, Settings, Logout -->
       <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
         <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
       </a>
@@ -185,26 +200,162 @@
         </div>
       </div>
 
+      <!-- 🔹 NEW: Doctor Discussion Topics Section -->
+      <div class="doctor-discussion-card">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <div style="font-size: 2.5rem;">💬</div>
+            <div>
+              <h5 class="mb-1 fw-bold" style="color: #1C1C1E;">Prepare for Your Doctor Visit</h5>
+              <p class="mb-0 text-muted">Get AI-generated discussion topics based on your health data</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary btn-lg"
+            id="generateDiscussionBtn"
+            style="border-radius: 12px; padding: 0.75rem 1.5rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,122,255,0.3);">
+            ✨ Generate Topics
+          </button>
+        </div>
+      </div>
+
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
         {% endfor %}
       {% endif %}
+        <!-- ADD THIS RIGHT AFTER THE "Doctor Discussion Topics Section" -->
+        <!-- Place this AFTER the doctor-discussion-card div and BEFORE the messages block -->
 
-      <!-- Daily Totals -->
-      <div class="card mb-4 p-3">
-        <div class="d-flex flex-wrap align-items-center justify-content-between">
-          <div class="fw-semibold">
-            Today <span class="text-muted">({{ today|date:"Y-m-d" }})</span> Totals:
-          </div>
-          <div class="d-flex flex-wrap gap-2">
-            <span class="stat-pill">Calories: <strong>{{ today_totals.calories|default:"0" }}</strong></span>
-            <span class="stat-pill">Protein: <strong>{{ today_totals.protein|default:"0" }}</strong> g</span>
-            <span class="stat-pill">Carbs: <strong>{{ today_totals.carbs|default:"0" }}</strong> g</span>
-            <span class="stat-pill">Fat: <strong>{{ today_totals.fat|default:"0" }}</strong> g</span>
-          </div>
-        </div>
-      </div>
+              <!-- 🔹 NEW: Week Navigation -->
+              <div class="card mb-4 p-4" style="border-radius: 16px;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <h5 class="mb-0 fw-bold">📅 Select Day</h5>
+                  <a href="{% url 'nutrition_dashboard' %}" class="btn btn-sm btn-outline-primary">
+                    Today
+                  </a>
+                </div>
+
+                <!-- Week Navigation -->
+                <div class="d-flex align-items-center gap-2 mb-3">
+                  <a href="?date={{ prev_week_date|date:'Y-m-d' }}"
+                     class="btn btn-outline-secondary">
+                    ← Previous Week
+                  </a>
+
+                  <div class="flex-grow-1 text-center fw-semibold text-muted">
+                    {{ week_start|date:"M d" }} - {{ week_end|date:"M d, Y" }}
+                  </div>
+
+                  <a href="?date={{ next_week_date|date:'Y-m-d' }}"
+                     class="btn btn-outline-secondary">
+                    Next Week →
+                  </a>
+                </div>
+
+                <!-- Day Buttons -->
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                  {% for day in week_days %}
+                  <a href="?date={{ day.date|date:'Y-m-d' }}"
+                     class="day-button {% if day.is_selected %}active{% endif %} {% if day.is_today %}today{% endif %} {% if day.has_data %}has-data{% endif %}"
+                     data-date="{{ day.date|date:'Y-m-d' }}">
+                    <div class="day-name">{{ day.day_name }}</div>
+                    <div class="day-number">{{ day.day_number }}</div>
+                    {% if day.has_data %}
+                    <div class="data-indicator">●</div>
+                    {% endif %}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Selected Day Info -->
+              <div class="card mb-4 p-3">
+                <div class="d-flex flex-wrap align-items-center justify-content-between">
+                  <div class="fw-semibold">
+                    <span class="text-primary">{{ selected_date|date:"l, F j, Y" }}</span>
+                    {% if selected_date == today %}
+                    <span class="badge bg-success ms-2">Today</span>
+                    {% endif %}
+                    Totals:
+                  </div>
+                  <div class="d-flex flex-wrap gap-2">
+                    <span class="stat-pill">Calories: <strong>{{ day_totals.calories|floatformat:0 }}</strong></span>
+                    <span class="stat-pill">Protein: <strong>{{ day_totals.protein|floatformat:1 }}</strong> g</span>
+                    <span class="stat-pill">Carbs: <strong>{{ day_totals.carbs|floatformat:1 }}</strong> g</span>
+                    <span class="stat-pill">Fat: <strong>{{ day_totals.fat|floatformat:1 }}</strong> g</span>
+                  </div>
+                </div>
+              </div>
+
+        <style>
+        /* Week Navigation Styles */
+        .day-button {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 0.75rem 1rem;
+          min-width: 70px;
+          border: 2px solid #E5E5EA;
+          border-radius: 12px;
+          background: white;
+          text-decoration: none;
+          color: #1C1C1E;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .day-button:hover {
+          border-color: #007AFF;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,122,255,0.15);
+        }
+
+        .day-button.active {
+          background: linear-gradient(135deg, #007AFF, #5856D6);
+          border-color: #007AFF;
+          color: white;
+          font-weight: 600;
+        }
+
+        .day-button.today:not(.active) {
+          border-color: #34C759;
+          background: #F0FFF4;
+        }
+
+        .day-button.has-data:not(.active) {
+          background: #F8F9FA;
+        }
+
+        .day-name {
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          margin-bottom: 0.25rem;
+        }
+
+        .day-number {
+          font-size: 1.25rem;
+          font-weight: 700;
+        }
+
+        .data-indicator {
+          position: absolute;
+          top: 6px;
+          right: 8px;
+          color: #34C759;
+          font-size: 0.5rem;
+        }
+
+        .day-button.active .data-indicator {
+          color: white;
+        }
+        </style>
+
+
+
 
       <!-- Add Entry + Import -->
       <div class="row g-4 mb-4">
@@ -264,13 +415,21 @@
                       <td>{{ e.logged_at }}</td>
                       <td>{{ e.meal_type }}</td>
                       <td class="text-end">{{ e.calories }}</td>
-                      <td class="text-end">{{ e.protein_g|default:"–" }}</td>
-                      <td class="text-end">{{ e.carbs_g|default:"–" }}</td>
-                      <td class="text-end">{{ e.fat_g|default:"–" }}</td>
+                      <td class="text-end">{{ e.protein_g|default:"—" }}</td>
+                      <td class="text-end">{{ e.carbs_g|default:"—" }}</td>
+                      <td class="text-end">{{ e.fat_g|default:"—" }}</td>
                       <td class="text-break" style="max-width: 260px;">{{ e.notes }}</td>
-                      <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" href="{% url 'nutrition_edit' e.id %}">Edit</a>
-                        <a class="btn btn-sm btn-outline-danger ms-1 js-delete" href="{% url 'nutrition_delete' e.id %}">Delete</a>
+                        <td class="text-end">
+                        <div class="btn-group" role="group">
+                          <a class="btn btn-sm btn-outline-primary" href="{% url 'nutrition_edit' e.id %}"
+                             style="border-radius: 8px 0 0 8px; min-width: 65px;">
+                            Edit
+                          </a>
+                          <a class="btn btn-sm btn-outline-danger js-delete" href="{% url 'nutrition_delete' e.id %}"
+                             style="border-radius: 0 8px 8px 0; min-width: 65px;">
+                            Delete
+                          </a>
+                        </div>
                       </td>
                     </tr>
                     {% endfor %}
@@ -278,7 +437,7 @@
                 </table>
               </div>
             {% else %}
-              <p class="text-muted mb-0">No entries yet — add your first one or import a CSV file.</p>
+              <p class="text-muted mb-0">No entries yet – add your first one or import a CSV file.</p>
             {% endif %}
           </div>
         </div>
@@ -344,14 +503,21 @@
                   </div>
                 </div>
               </div>
-            </div><!-- /row -->
+            </div>
           </div>
         </div>
       </div>
     </main>
   </div>
 
+  <!-- 🔹 Include Doctor Discussion Modal -->
+  {% include 'healthdata/partials/doctor_discussion_modal.html' %}
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- 🔹 Include Doctor Discussion JavaScript -->
+  <script src="{% static 'js/doctor_discussion.js' %}"></script>
+
   <script>
     document.addEventListener('click', function (e) {
       const btn = e.target.closest('.js-delete');

@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
@@ -18,7 +19,7 @@ from .models import (
     NutritionEntry, HealthReminder,
     GlucoseEntry, MedicationEntry, DoctorNote,
     VitalLog, MoodLog, SymptomLog, HabitLog, WellbeingLog,
-    Goal
+    Goal, ActivityData, HealthMetrics
 )
 from .serializers import (
     NutritionEntrySerializer, HealthReminderSerializer,
@@ -92,16 +93,50 @@ class HealthReminderViewSet(viewsets.ReadOnlyModelViewSet):
 # ----------------------------------------------------------------------
 @login_required
 def home_dashboard(request):
-    """Main landing page after login → uses proactive dashboard."""
-    return render(request, "proactive_feat/home_dashboard.html")
+    """Main landing page after login with health metrics."""
+    today = timezone.localdate()
+
+    # 1️⃣ Get today's steps (from ActivityData)
+    today_activity = ActivityData.objects.filter(
+        user=request.user,
+        date=today
+    ).first()
+
+    steps_today = today_activity.steps if today_activity else 0
+
+    # 2️⃣ Get latest heart rate (from HealthMetrics)
+    latest_heart_rate_entry = HealthMetrics.objects.filter(
+        user=request.user,
+        heart_rate_resting__isnull=False
+    ).order_by('-logged_at').first()
+
+    heart_rate = latest_heart_rate_entry.heart_rate_resting if latest_heart_rate_entry else 0
+
+    # 3️⃣ Get latest active goal
+    latest_goal = Goal.objects.filter(
+        user=request.user,
+        status='active'
+    ).order_by('-created_at').first()
+
+    # Build context data
+    context = {
+        'steps': steps_today,
+        'heart_rate': heart_rate,
+        'goal': latest_goal,
+        'today': today,
+    }
+
+    return render(request, "proactive_feat/home_dashboard.html", context)
 
 
 # ----------------------------------------------------------------------
-# 🔹 Nutrition Dashboard
+# 🔹 Nutrition Dashboard with Week View Navigation
 # ----------------------------------------------------------------------
 @login_required
 def nutrition_dashboard(request):
-    """Nutrition Dashboard (add / view entries + import CSV)."""
+    """Nutrition Dashboard with day-by-day filtering."""
+
+    # Handle form submission for adding new entry
     if request.method == "POST":
         form = NutritionEntryForm(request.POST)
         if form.is_valid():
@@ -113,23 +148,66 @@ def nutrition_dashboard(request):
     else:
         form = NutritionEntryForm()
 
-    entries = NutritionEntry.objects.filter(
-        user=request.user
-    ).order_by("-logged_at", "-created_at")
-
+    # Get selected date from query parameter or default to today
     today = timezone.localdate()
-    today_qs = NutritionEntry.objects.filter(user=request.user, logged_at=today)
-    agg = today_qs.aggregate(
+    selected_date_str = request.GET.get('date')
+
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = today
+    else:
+        selected_date = today
+
+    # Calculate week boundaries (Monday to Sunday)
+    week_start = selected_date - timedelta(days=selected_date.weekday())  # Monday
+    week_end = week_start + timedelta(days=6)  # Sunday
+
+    # Generate week days for navigation
+    week_days = []
+    for i in range(7):
+        day = week_start + timedelta(days=i)
+        has_data = NutritionEntry.objects.filter(
+            user=request.user,
+            logged_at=day
+        ).exists()
+
+        week_days.append({
+            'date': day,
+            'day_name': day.strftime('%a'),  # Mon, Tue, Wed...
+            'day_number': day.day,
+            'is_today': day == today,
+            'is_selected': day == selected_date,
+            'has_data': has_data,
+        })
+
+    # Calculate previous and next week dates
+    prev_week_date = week_start - timedelta(days=7)
+    next_week_date = week_start + timedelta(days=7)
+
+    # Get entries for SELECTED DAY only
+    entries = NutritionEntry.objects.filter(
+        user=request.user,
+        logged_at=selected_date
+    ).order_by("-created_at")
+
+    # Calculate totals for SELECTED DAY
+    day_agg = NutritionEntry.objects.filter(
+        user=request.user,
+        logged_at=selected_date
+    ).aggregate(
         calories=Sum("calories"),
         protein=Sum("protein_g"),
         carbs=Sum("carbs_g"),
         fat=Sum("fat_g"),
     )
-    today_totals = {
-        "calories": agg["calories"] or 0,
-        "protein": agg["protein"] or 0,
-        "carbs": agg["carbs"] or 0,
-        "fat": agg["fat"] or 0,
+
+    day_totals = {
+        "calories": day_agg["calories"] or 0,
+        "protein": float(day_agg["protein"] or 0),
+        "carbs": float(day_agg["carbs"] or 0),
+        "fat": float(day_agg["fat"] or 0),
     }
 
     return render(
@@ -138,10 +216,18 @@ def nutrition_dashboard(request):
         {
             "form": form,
             "entries": entries,
+            "selected_date": selected_date,
             "today": today,
-            "today_totals": today_totals,
+            "day_totals": day_totals,
+            "week_days": week_days,
+            "prev_week_date": prev_week_date,
+            "next_week_date": next_week_date,
+            "week_start": week_start,
+            "week_end": week_end,
         },
     )
+
+
 
 
 # ----------------------------------------------------------------------
@@ -462,3 +548,182 @@ class WellbeingLogViewSet(viewsets.ModelViewSet):
 # ----------------------------------------------------------------------
 def redirect_to_home_dashboard(request):
     return redirect("home_dashboard")
+
+
+# ----------------------------------------------------------------------
+# 🔹 Epic 7 Story 2: Doctor Discussion Topics
+# ----------------------------------------------------------------------
+@login_required
+def generate_doctor_discussion(request):
+    """
+    Generate AI-powered doctor discussion topics using existing AI agent.
+    Integrates with Epic 7 Story 1 AI infrastructure.
+
+    Returns JSON with observations, questions, context, and disclaimer.
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'error': 'Only POST requests are allowed'
+        }, status=405)
+
+    try:
+        # Check if user has sufficient health data
+        end_date = timezone.localdate()
+        start_date = end_date - timedelta(days=30)
+
+        # Count entries by type
+        nutrition_count = NutritionEntry.objects.filter(
+            user=request.user,
+            logged_at__gte=start_date
+        ).count()
+
+        total_entries = nutrition_count
+
+        if total_entries < 3:
+            return JsonResponse({
+                'success': False,
+                'error': 'Insufficient health data. Please log at least 3 days of data before generating discussion topics.'
+            }, status=400)
+
+        # Initialize AI agent service (from Epic 7 Story 1)
+        agent_service = AIAgentService(request.user)
+
+        # Create specialized prompt for doctor discussion topics
+        prompt = """I need help preparing for my doctor appointment. Based on my health data from the past 30 days, please generate a structured report with:
+
+1. **Observations**: 3-5 key patterns or insights from my logged health data (nutrition, activity, sleep if available)
+2. **Questions to Ask**: 3-5 specific questions I should discuss with my doctor based on my data
+3. **Context**: 2-3 pieces of additional relevant information about my health behavior
+
+**Important Guidelines:**
+- Base everything on my actual logged data
+- DO NOT provide medical advice or diagnoses
+- Focus on observations and questions, not recommendations
+- Be specific and reference actual data points when possible
+- Keep each point concise (1-2 sentences)
+
+Please structure your response clearly with these three sections."""
+
+        # Call existing AI agent
+        result = agent_service.process_message(
+            message=prompt,
+            days_to_analyze=30
+        )
+
+        # Check for errors
+        if result.get('error'):
+            logger.error(f"AI agent error for user {request.user.id}: {result['error']}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Unable to generate discussion topics. Please try again later.'
+            }, status=500)
+
+        # Parse the agent's response
+        response_text = result.get('response', '')
+
+        if not response_text:
+            return JsonResponse({
+                'success': False,
+                'error': 'AI service returned an empty response. Please try again.'
+            }, status=500)
+
+        # Parse response into structured format
+        topics = _parse_discussion_response(response_text)
+
+        return JsonResponse({
+            'success': True,
+            'topics': topics
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating doctor discussion topics: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': 'An unexpected error occurred. Please try again later.'
+        }, status=500)
+
+
+def _parse_discussion_response(response_text):
+    """
+    Parse AI agent's response into structured format.
+
+    Args:
+        response_text: Raw text response from AI agent
+
+    Returns:
+        dict: Structured topics with observations, questions, context, disclaimer
+    """
+    # Remove safety disclaimer if present (we'll add our own)
+    if SAFETY_DISCLAIMER in response_text:
+        response_text = response_text.replace(SAFETY_DISCLAIMER, '').strip()
+
+    topics = {
+        'observations': [],
+        'questions': [],
+        'context': [],
+        'disclaimer': 'These are observations from your data, not medical advice. Please discuss these topics with your healthcare provider.'
+    }
+
+    try:
+        # Split response into lines
+        lines = response_text.split('\n')
+        current_section = None
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Detect section headers (case-insensitive)
+            line_lower = line.lower()
+
+            # Check for section headers
+            if 'observation' in line_lower and len(line) < 100:
+                current_section = 'observations'
+                continue
+            elif 'question' in line_lower and len(line) < 100:
+                current_section = 'questions'
+                continue
+            elif 'context' in line_lower and len(line) < 100:
+                current_section = 'context'
+                continue
+
+            # Skip lines that are too short or just formatting
+            if len(line) < 10 or line in ['**', '---', '===']:
+                continue
+
+            # Clean up the line (remove bullets, numbers, asterisks)
+            cleaned = line.replace('**', '').replace('*', '').strip()
+            cleaned = cleaned.lstrip('0123456789.-–• ').strip()
+
+            # Add to appropriate section
+            if current_section and cleaned and len(cleaned) > 15:
+                topics[current_section].append(cleaned)
+
+        # If parsing didn't work well, try a simpler approach
+        if not any(topics[key] for key in ['observations', 'questions', 'context']):
+            # Just split into sentences and distribute
+            sentences = [s.strip() for s in response_text.split('.') if len(s.strip()) > 20]
+
+            # Distribute sentences across sections
+            third = len(sentences) // 3
+            topics['observations'] = sentences[:third] if third > 0 else sentences[:2]
+            topics['questions'] = sentences[third:third * 2] if third > 0 else sentences[2:4]
+            topics['context'] = sentences[third * 2:] if third > 0 else sentences[4:]
+
+        # Ensure each section has at least one item
+        if not topics['observations']:
+            topics['observations'] = [
+                'Based on your recent health data, there are patterns worth discussing with your doctor.']
+        if not topics['questions']:
+            topics['questions'] = ['What changes would you recommend based on my current health metrics?']
+        if not topics['context']:
+            topics['context'] = ['Your health data has been tracked consistently over the past month.']
+
+    except Exception as e:
+        logger.error(f"Error parsing discussion response: {str(e)}")
+        # Return fallback structure
+        topics['observations'] = ['Unable to parse AI response. Please try again.']
+
+    return topics

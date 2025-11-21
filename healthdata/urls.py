@@ -36,6 +36,10 @@ urlpatterns = [
     path('goals/<int:pk>/edit/', views.goal_edit, name='goal_edit'),
     path('goals/<int:pk>/delete/', views.goal_delete, name='goal_delete'),
 
+    #  Epic 7 Story 2: Doctor Discussion Topics
+    #path('api/doctor-discussion/', views.generate_doctor_discussion, name='generate_doctor_discussion'),
+    path('doctor-discussion/', views.generate_doctor_discussion, name='generate_doctor_discussion'),
+
     # API
     path('', include(router.urls)),
 ]

@@ -95,6 +95,7 @@ def launcher(request):
         {"DASHBOARD_URL": DASHBOARD_URL},  # ensure available
     )
 
+
 # ---------- Home Dashboard ----------
 @login_required
 def home_dashboard(request):
@@ -102,19 +103,43 @@ def home_dashboard(request):
     Displays the main home dashboard with user info,
     steps, heart rate, and latest goal.
     """
-    # Example placeholder values — will connect later to real data
-    user_name = request.user.username
-    steps = 6980  # link later to ActivityData model
-    heart_rate = 78  # link later to HealthMetrics model
-    goal = {
-        'title': 'Walk 10,000 steps daily',
-        'description': 'Maintain a consistent walking habit to improve stamina and overall health.'
-    }
+    from django.utils import timezone
+    from healthdata.models import ActivityData, HealthMetrics, Goal
+
+    user = request.user
+    today = timezone.localdate()
+
+    # ✅ Get today's steps from ActivityData
+    today_activity = ActivityData.objects.filter(
+        user=user,
+        date=today
+    ).first()
+    steps = today_activity.steps if today_activity else 0
+
+    # ✅ Get most recent heart rate from HealthMetrics
+    latest_metrics = HealthMetrics.objects.filter(
+        user=user
+    ).order_by('-logged_at').first()
+    heart_rate = latest_metrics.heart_rate_resting if latest_metrics else 0
+
+    # ✅ Get the latest active goal
+    latest_goal = Goal.objects.filter(
+        user=user,
+        status='active'
+    ).order_by('-created_at').first()
+
+    # Format goal data for template
+    goal = None
+    if latest_goal:
+        goal = {
+            'title': latest_goal.title or f"{latest_goal.get_goal_type_display()} Goal",
+            'notes': latest_goal.notes or f"Target: {latest_goal.target_value}"
+        }
 
     return render(request, 'proactive_feat/home_dashboard.html', {
-        'user_name': user_name,
+        'user_name': user.username,
         'steps': steps,
         'heart_rate': heart_rate,
         'goal': goal,
-        "DASHBOARD_URL": DASHBOARD_URL,  # reuse variable for navigation
+        "DASHBOARD_URL": DASHBOARD_URL,
     })
