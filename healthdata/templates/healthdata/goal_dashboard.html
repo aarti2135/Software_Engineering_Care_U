@@ -345,7 +345,7 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      
+
       <!-- Page Header -->
       <div class="page-header">
         <div>
@@ -368,7 +368,7 @@
       {% if goals %}
         {% for goal in goals %}
           <div class="goal-card {% if goal.status == 'completed' %}completed{% elif goal.due_date and goal.due_date < today %}overdue{% endif %}">
-            
+
             <!-- Goal Header -->
             <div class="goal-header">
               <div>
@@ -377,7 +377,7 @@
                   {{ goal.get_goal_type_display }} · {{ goal.get_frequency_display }}
                 </div>
               </div>
-              
+
               <!-- Status Badge -->
               <div>
                 {% if goal.status == 'completed' %}
@@ -442,4 +442,3 @@
 ```
 
 ---
-

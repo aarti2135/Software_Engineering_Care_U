@@ -31,7 +31,10 @@ urlpatterns = [
     # ------------------------------------------------------------------
     # Proactive / AI module
     # ------------------------------------------------------------------
-    path('proactive/', include('proactive_feat.urls')),
+    path(
+        'proactive/',
+        include(('proactive_feat.urls', 'proactive_feat'), namespace='proactive_feat'),
+    ),
 
     # ------------------------------------------------------------------
     # User management (consent, provider alerts)

@@ -1,67 +1,275 @@
-# proactive_feat/views.py
-from urllib.parse import urlsplit, urlunsplit
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Add Vital · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.timezone import now
-from django.views.decorators.http import require_http_methods
+  <!-- Bootstrap & Fonts -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-from .forms import VitalForm
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f5fb;
+      color: #1C1C1E;
+      margin: 0;
+    }
 
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      min-height: 100vh;
+    }
 
-def _safe_next_url(request, candidate: str | None, *, fallback: str) -> str:
-    """
-    Return a redirect URL that is guaranteed to be safe for this host.
-    Preserves fragments (e.g., '#pro-vitals') if provided.
-    """
-    if not candidate:
-        return fallback
+    /* LEFT SIDEBAR – same vibe as your other pages */
+    .sidebar-left {
+      background: #fff;
+      border-right: 1px solid #E5E5EA;
+      padding: 2rem 0;
+      position: fixed;
+      width: 80px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-    parts = urlsplit(candidate)
-    # Reject non-http(s) schemes or cross-host links
-    if parts.scheme and parts.scheme not in ("http", "https"):
-        return fallback
-    if parts.netloc and parts.netloc != request.get_host():
-        return fallback
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      color: #8E8E93;
+      transition: all 0.2s ease;
+      font-size: 20px;
+      position: relative;
+    }
 
-    # Rebuild path?query#fragment to keep anchors
-    rebuilt = urlunsplit(("", "", parts.path or "/", parts.query, parts.fragment))
-    if url_has_allowed_host_and_scheme(rebuilt, allowed_hosts={request.get_host()}):
-        return rebuilt
-    return fallback
+    .nav-icon:hover,
+    .nav-icon.active {
+      background: #eef2ff;
+      color: #1C1C1E;
+    }
 
+    .nav-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1C1C1E;
+      color: #fff;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      margin-left: 0.5rem;
+      z-index: 1001;
+    }
 
-@login_required
-@require_http_methods(["GET", "POST"])
-def pro_vital_form(request):
-    """
-    Create a Vital and redirect back to the Nutrition dashboard
-    (or a safe 'next' URL), keeping the '#pro-vitals' anchor by default.
-    """
-    default_next = f"{reverse('nutrition_dashboard')}#pro-vitals"
+    .user-avatar {
+      background: linear-gradient(135deg,#007AFF,#5856D6);
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
 
-    if request.method == "POST":
-        form = VitalForm(request.POST)
-        if form.is_valid():
-            vital = form.save(commit=False)
-            vital.user = request.user
-            vital.save()
+    /* MAIN AREA */
+    .main-content {
+      grid-column: 2;
+      padding: 2.5rem;
+      margin-left: 80px;
+    }
 
-            messages.success(request, "Vital saved successfully.")
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
 
-            # Prefer explicit 'next', then ?next=…, then Referer, else dashboard
-            raw_next = (
-                request.POST.get("next")
-                or request.GET.get("next")
-                or request.META.get("HTTP_REFERER")
-            )
-            next_url = _safe_next_url(request, raw_next, fallback=default_next)
-            return redirect(next_url)
-    else:
-        # Provide a sensible default timestamp so the widget isn't empty
-        form = VitalForm(initial={"measured_at": now()})
+    .page-header h3 {
+      font-weight: 600;
+      margin-bottom: .25rem;
+    }
 
-    return render(request, "proactive_feat/vitals_form.html", {"form": form})
+    .pill-info {
+      display: inline-flex;
+      align-items: center;
+      background: #e3f2ff;
+      color: #0060d4;
+      border-radius: 999px;
+      padding: 0.25rem .75rem;
+      font-size: .8rem;
+      font-weight: 500;
+    }
+
+    /* CARD LIKE “ADD NUTRITION ENTRY” */
+    .card-vital {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+      padding: 1.75rem 2rem 1.5rem;
+      max-width: 720px;
+    }
+
+    .card-vital h5 {
+      font-weight: 600;
+      margin-bottom: .35rem;
+    }
+
+    .card-vital small {
+      color: #8e8e93;
+    }
+
+    /* FORM STYLING */
+    form p {
+      margin-bottom: 1rem;
+    }
+
+    form p label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+    }
+
+    form p input,
+    form p select,
+    form p textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid #e2e4f0;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.95rem;
+      background: #f9faff;
+    }
+
+    form p input:focus,
+    form p select:focus,
+    form p textarea:focus {
+      outline: none;
+      border-color: #4c8dff;
+      box-shadow: 0 0 0 1px rgba(76,141,255,0.35);
+      background: #ffffff;
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      padding: 0.55rem 1.4rem;
+      font-weight: 500;
+      box-shadow: 0 12px 25px rgba(32, 99, 255, 0.35);
+    }
+
+    .btn-light-rounded {
+      border-radius: 999px;
+      padding: 0.55rem 1.2rem;
+      font-weight: 500;
+      border: 1px solid #e1e4f0;
+      background: #ffffff;
+    }
+
+    .actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+  </style>
+</head>
+
+<body>
+<div class="dashboard-container">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar-left">
+    <div class="user-avatar">
+      {{ request.user.username|first|upper }}
+    </div>
+
+    <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+      <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
+    </a>
+    <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+      <img src="{% static 'img/analytics_icon.png' %}" alt="Analytics" width="22" height="22">
+    </a>
+    <a href="{% url 'nutrition_dashboard' %}" class="nav-icon active" data-tooltip="Nutrition">
+      <img src="{% static 'img/nutrition_icon.png' %}" alt="Nutrition" width="22" height="22">
+    </a>
+    <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+      <img src="{% static 'img/goals_icon.png' %}" alt="Goals" width="22" height="22">
+    </a>
+    <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
+      <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
+    </a>
+    <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon" data-tooltip="Chats">
+      <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
+    </a>
+    <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
+      <img src="{% static 'img/consent_icon.png' %}" alt="Consent" width="22" height="22">
+    </a>
+    <a href="#" class="nav-icon" data-tooltip="Settings">
+      <img src="{% static 'img/settings_icon.png' %}" alt="Settings" width="22" height="22">
+    </a>
+    <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+      <img src="{% static 'img/logout_icon.png' %}" alt="Logout" width="22" height="22">
+    </a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h3>Add Vital Reading</h3>
+        <span class="pill-info">⚕️ Keep your health data up to date</span>
+      </div>
+
+      <a href="{{ DASHBOARD_URL|default:'/dashboard/nutrition/' }}" class="btn-light-rounded">
+        ← Back to Nutrition
+      </a>
+    </div>
+
+    <div class="card-vital">
+      <div class="mb-3">
+        <h5>Log a new measurement</h5>
+        <small>Choose the vital type, enter the value, and when it was measured.</small>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        {% if request.GET.next %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% endif %}
+
+        <div class="actions-row">
+          <a href="{{ DASHBOARD_URL|default:'/dashboard/nutrition/' }}" class="btn-light-rounded">
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">
+            Save Vital
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

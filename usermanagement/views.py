@@ -1,7 +1,7 @@
 # usermanagement/views.py
+
 from django.shortcuts import render, redirect
 from django.views import View
-from django.views.generic import TemplateView
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
@@ -9,18 +9,16 @@ from django.utils import timezone
 
 from usermanagement.utils import (
     share_user_data_with_insurer,
-    detect_health_patterns,
-    share_user_data_with_provider
+    share_user_data_with_provider,
 )
 from usermanagement.models import Profile, ProviderAlert
-from healthdata.ai_agent import evaluate_user
 
 User = get_user_model()
 
 
-# ============================================================================
+# ======================================================================
 # CONSENT MANAGEMENT
-# ============================================================================
+# ======================================================================
 
 class ConsentView(LoginRequiredMixin, View):
     """Handle user consent for data sharing."""
@@ -59,71 +57,42 @@ class ConsentView(LoginRequiredMixin, View):
 
             messages.success(
                 request,
-                f"✅ You agreed to share your data on "
-                f"{profile.consent_timestamp:%Y-%m-%d %H:%M}. {msg}"
+                (
+                    "✅ You agreed to share your data on "
+                    f"{profile.consent_timestamp:%Y-%m-%d %H:%M}. {msg}"
+                ),
             )
         else:
             messages.warning(
                 request,
-                f"❌ You declined data sharing on {profile.consent_timestamp:%Y-%m-%d %H:%M}."
+                f"❌ You declined data sharing on {profile.consent_timestamp:%Y-%m-%d %H:%M}.",
             )
 
         return redirect("usermanagement:consent")
 
 
-# ============================================================================
-# PROVIDER ALERTS & HEALTH ANALYSIS
-# ============================================================================
+# ======================================================================
+# PROVIDER ALERTS PAGE
+# ======================================================================
 
 class ProviderAlertsView(LoginRequiredMixin, View):
-    """Display and analyze provider AI health alerts for the current user."""
+    """
+    Simple view that shows ALL ProviderAlert rows for the current user.
+
+    The AI is triggered separately by /proactive/run-ai/ (in proactive_feat),
+    so this view only needs a GET.
+    """
     template_name = "usermanagement/provider_alerts.html"
 
     def get(self, request):
-        """Display all alerts and allow the user to trigger the AI scan."""
-        user = request.user
+        # Show ALL alerts for this provider, newest first
+        alerts = ProviderAlert.objects.filter(user=request.user).order_by("-created_at")
+        return render(request, self.template_name, {"alerts": alerts})
 
-        # Run AI analysis to ensure alerts are updated (safe version)
-        try:
-            evaluate_user(user)
-        except Exception as e:
-            print(f"⚠️ AI evaluation failed: {e}")
 
-        # Pattern detection (non-blocking)
-        try:
-            detect_health_patterns(user)
-        except Exception as e:
-            print(f"⚠️ Pattern detection failed: {e}")
-
-        # Fetch all provider alerts for the current user
-        alerts = ProviderAlert.objects.filter(user=user).order_by('-created_at')
-
-        context = {
-            "alerts": alerts,
-        }
-        return render(request, self.template_name, context)
-
-    def post(self, request):
-        """Handle 'Run AI Now' button → triggers AI and reloads page with message."""
-        user = request.user
-
-        try:
-            created = evaluate_user(user)  # Can return alert count
-            if created:
-                messages.success(
-                    request,
-                    f"🤖 AI ran successfully and generated {created} new alert(s)."
-                )
-            else:
-                messages.info(
-                    request,
-                    "✅ AI ran successfully --- no new alerts were needed."
-                )
-        except Exception as e:
-            messages.error(request, f"⚠️ Error while running AI: {e}")
-
-        return redirect("usermanagement:provider_alerts")
-
+# ======================================================================
+# PROVIDER REQUESTING DATA SHARING
+# ======================================================================
 
 class RequestDataSharingView(LoginRequiredMixin, View):
     """Simulate provider requesting data access from another user (patient)."""
@@ -142,15 +111,25 @@ class RequestDataSharingView(LoginRequiredMixin, View):
             result = share_user_data_with_provider(patient, provider)
 
             # Handle response message
-            if result.get("status") == "success":
-                messages.success(request, result.get("message", "Data shared successfully."))
-            elif result.get("status") == "denied":
-                messages.warning(request, result.get("message", "Data sharing was denied."))
+            status = result.get("status")
+            if status == "success":
+                messages.success(
+                    request,
+                    result.get("message", "Data shared successfully."),
+                )
+            elif status == "denied":
+                messages.warning(
+                    request,
+                    result.get("message", "Data sharing was denied."),
+                )
             else:
-                messages.error(request, result.get("message", "Unknown response received."))
+                messages.error(
+                    request,
+                    result.get("message", "Unknown response received."),
+                )
 
         except Exception as e:
             messages.error(request, f"⚠️ Unexpected error: {e}")
 
-        # Redirect back to dashboard
+        # Redirect back to dashboard (same as before)
         return redirect("nutrition_dashboard")

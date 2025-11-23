@@ -456,7 +456,7 @@
                     <img src="{% static 'img/careu-logo.svg' %}" alt="CareU" width="22" height="22" style="border-radius:6px;">
                     <p class="peek-title mb-0">Latest alerts</p>
                   </div>
-                  <a href="{% url 'pro_alerts_list' %}" class="btn btn-outline-secondary btn-sm">Open full alerts</a>
+                  <a href="{% url 'proactive_feat:pro_alerts_list' %}" class="btn btn-outline-secondary btn-sm">Open full alerts</a>
                 </div>
                 <div class="peek-list" id="peek-list"></div>
               </div>
@@ -467,7 +467,7 @@
                 <div class="card h-100">
                   <div class="card-body">
                     <h6 class="mb-2">Quick Vital Log</h6>
-                    <form method="post" action="{% url 'pro_vital_form' %}" novalidate>
+                    <form method="post" action="{% url 'proactive_feat:pro_vital_form' %}" novalidate>
                       {% csrf_token %}
                       <input type="hidden" name="next" value="{% url 'nutrition_dashboard' %}#pro-vitals">
                       <div class="mb-3">
