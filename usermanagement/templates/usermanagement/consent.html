@@ -1,76 +1,261 @@
-<!doctype html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Data Sharing Consent - Care U</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background-color: #f6f8fb; }
-    .card {
-      border: none;
-      border-radius: 16px;
-      box-shadow: 0 10px 22px rgba(20,40,80,.06);
-    }
-    .navbar-brand { font-weight: 700; }
-    .consent-buttons .btn {
-      min-width: 140px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Data Sharing Consent · CareU</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap + Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+          --primary: #007AFF;
+          --secondary: #5856D6;
+          --success: #34C759;
+          --warning: #FF9500;
+          --danger: #FF3B30;
+          --bg-primary: #FFFFFF;
+          --bg-secondary: #F2F2F7;
+          --text-primary: #1C1C1E;
+          --text-secondary: #8E8E93;
+          --border: #E5E5EA;
+          --card-radius: 16px;
+          --sidebar-width: 80px;
+        }
+
+        body {
+          font-family: 'Inter', sans-serif;
+          background: var(--bg-secondary);
+          margin: 0;
+          padding: 0;
+        }
+
+        /* Layout */
+        .app-container {
+          display: grid;
+          grid-template-columns: var(--sidebar-width) 1fr;
+          min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar-left {
+          background: var(--bg-primary);
+          border-right: 1px solid var(--border);
+          padding: 2rem 0;
+          position: fixed;
+          width: var(--sidebar-width);
+          height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          z-index: 1000;
+        }
+
+        .user-avatar {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--primary), var(--secondary));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 600;
+          margin: 0 auto 1.5rem auto;
+        }
+
+        .nav-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1rem;
+          transition: all 0.2s ease;
+          color: var(--text-secondary);
+          text-decoration: none;
+          position: relative;
+        }
+
+        .nav-icon:hover,
+        .nav-icon.active {
+          background: #e5e5ea;
+          color: var(--text-primary);
+        }
+
+        .nav-icon:hover::after {
+          content: attr(data-tooltip);
+          position: absolute;
+          left: 100%;
+          top: 50%;
+          transform: translateY(-50%);
+          background: var(--text-primary);
+          color: white;
+          padding: 0.5rem 0.75rem;
+          border-radius: 8px;
+          font-size: 0.75rem;
+          white-space: nowrap;
+          margin-left: 0.5rem;
+          z-index: 1001;
+        }
+
+        /* Main Content */
+        .main-content {
+          grid-column: 2;
+          padding: 2rem;
+          margin-left: var(--sidebar-width);
+        }
+
+        .page-header h3 {
+          font-weight: 700;
+        }
+
+        /* Center Wrapper */
+        .center-wrapper {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 70vh;
+        }
+
+        /* Consent Card */
+        .consent-card {
+          background: var(--bg-primary);
+          border-radius: var(--card-radius);
+          padding: 2rem;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+          max-width: 720px;
+        }
+
+        .consent-buttons .btn {
+          min-width: 160px;
+        }
+
+        .small-note {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+          .sidebar-left {
+            display: none;
+          }
+          .main-content {
+            margin-left: 0;
+          }
+          .consent-card {
+            padding: 1.5rem;
+          }
+        }
+    </style>
 </head>
+
 <body>
+<div class="app-container">
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-  <div class="container">
-    <a class="navbar-brand" href="{% url 'nutrition_dashboard' %}">Care U</a>
-
-    <div class="ms-auto d-flex align-items-center gap-3 text-white-50">
-      <span>Signed in as <strong class="text-white">{{ request.user.username }}</strong></span>
-      <a class="btn btn-sm btn-outline-light" href="{% url 'User_Login:logout' %}?next={% url 'User_Login:login' %}">Logout</a>
-    </div>
-  </div>
-</nav>
-
-<div class="container">
-  {% if messages %}
-    <div class="mt-3">
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} text-center fw-semibold shadow-sm" role="alert">
-          {{ message }}
+    <!-- Sidebar -->
+    <nav class="sidebar-left">
+        <div class="user-avatar">
+            {{ request.user.username|first|upper }}
         </div>
-      {% endfor %}
-    </div>
-  {% endif %}
 
+        <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+          <img src="{% static 'img/home_icon.png' %}" width="22">
+        </a>
+        <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+          <img src="{% static 'img/analytics_icon.png' %}" width="22">
+        </a>
+        <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Nutrition">
+          <img src="{% static 'img/nutrition_icon.png' %}" width="22">
+        </a>
+        <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+          <img src="{% static 'img/goals_icon.png' %}" width="22">
+        </a>
+        <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
+          <img src="{% static 'img/reminders_icon.png' %}" width="22">
+        </a>
+        <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon" data-tooltip="Chats">
+          <img src="{% static 'img/chats_icon.png' %}" width="22">
+        </a>
+        <a href="{% url 'usermanagement:consent' %}" class="nav-icon active" data-tooltip="Consent">
+          <img src="{% static 'img/consent_icon.png' %}" width="22">
+        </a>
+        <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+          <img src="{% static 'img/logout_icon.png' %}" width="22">
+        </a>
+    </nav>
 
-  <div class="card mx-auto" style="max-width: 600px;">
-    <div class="card-body text-center py-5">
-      <h3 class="fw-bold mb-3">Data Sharing Consent</h3>
-      <p class="text-muted mb-4">
-        Care U values your privacy. You can choose whether you want to share your anonymized health data (PIHD)
-        with third parties for research or insurance purposes.
-        <br><br>
-        Please select your consent preference below:
-      </p>
+    <!-- Main Content -->
+    <main class="main-content">
 
-      <form method="post" id="consentForm" class="consent-buttons">
-        {% csrf_token %}
-        <input type="hidden" name="user_id" value="{{ request.user.id }}">
+        <!-- Header -->
+        <div class="page-header mb-4">
+            <h3>🔐 Data Sharing Consent</h3>
+            <p class="text-muted mb-0">
+                Control how your anonymized health data is shared with insurers and researchers.
+            </p>
+        </div>
 
-        <button type="submit" name="consent" value="yes" class="btn btn-success me-2">Agree</button>
+        <!-- Django Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
 
-        <button type="submit" name="consent" value="no" class="btn btn-danger">Disagree</button>
-      </form>
+        <!-- Centered Consent Card -->
+        <div class="center-wrapper">
+            <section class="consent-card">
+                <h5 class="fw-semibold mb-3">Your Privacy, Your Choice</h5>
+                <p class="text-muted">
+                    CareU values your privacy. You can choose whether you want to share your
+                    anonymized health data (PIHD) with third parties such as insurers or
+                    research partners to help improve services and health insights.
+                </p>
+                <p class="text-muted mb-4">
+                    You can change this setting at any time from this page.
+                </p>
 
-      <p class="mt-4 small text-muted">
-        Your choice will be saved and can be updated anytime.
-      </p>
+                <form method="post" id="consentForm" class="consent-buttons mb-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ request.user.id }}">
 
-      <a href="{% url 'nutrition_dashboard' %}" class="btn btn-outline-secondary mt-3">Back to Dashboard</a>
-    </div>
-  </div>
+                    <div class="d-flex flex-wrap gap-3">
+                        <button type="submit"
+                                name="consent"
+                                value="yes"
+                                class="btn btn-success">
+                            ✅ Agree to Share
+                        </button>
+
+                        <button type="submit"
+                                name="consent"
+                                value="no"
+                                class="btn btn-outline-danger">
+                            ❌ Do Not Share
+                        </button>
+                    </div>
+                </form>
+
+                <p class="small-note">
+                    Your current choice is saved securely and can be updated anytime.
+                </p>
+
+                <a href="{% url 'nutrition_dashboard' %}" class="btn btn-link px-0 mt-2">
+                    ← Back to Nutrition Dashboard
+                </a>
+            </section>
+        </div>
+
+    </main>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

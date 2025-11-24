@@ -613,32 +613,28 @@ class AIAgentService:
                 "metadata": {},
                 "error": error_msg
             }
+
+
 class ProviderAlertsAgent:
     """
-    Provider alert agent for Epic 7 – Story 3.
+    Provider alert agent for Epic 7 – weekly nutrition summary.
 
-    UPDATED VERSION:
-    - Still uses HealthDataAggregator + Gemini (API key in .env) for a WEEKLY summary
-    - ALSO creates RULE-BASED DAILY alerts for specific days
+    - Uses HealthDataAggregator + Gemini (API key in .env) for a WEEKLY summary
     - Respects Profile.data_sharing_consent
-    - Creates multiple ProviderAlert objects per patient:
-        * one per concerning day
-        * one weekly AI summary (created last so it appears on top)
+    - Creates ONE ProviderAlert per patient (weekly summary)
     """
 
     def __init__(self, provider_user):
         self.provider = provider_user
         self.UserModel = get_user_model()
         self.aggregator = HealthDataAggregator()
-        # ✅ Uses GEMINI_API_KEY from .env via GeminiClient
+        # Gemini client uses GEMINI_API_KEY from .env
         self.gemini = GeminiClient()
 
     # ---------- helper: which patients belong to this provider ----------
 
     def _get_patients_for_provider(self):
         """
-        How you link providers to patients.
-
         TEMP DEMO:
         - Provider can see all other users.
         TODO (later): replace with provider.patients.all() once that relation exists.
@@ -658,61 +654,6 @@ class ProviderAlertsAgent:
             return False
 
         return bool(getattr(profile, "data_sharing_consent", False))
-
-    # ---------- DAILY RULE-BASED ANALYSIS ----------
-    def _build_daily_alerts(self, user, days=7):
-        """
-        Build a DAILY summary alert for each day in the last N days.
-
-        - Always creates one alert per day that has entries
-        - Severity changes depending on daily total calories
-        """
-
-        start_date = timezone.localdate() - timedelta(days=days)
-
-        daily_stats = (
-            NutritionEntry.objects
-            .filter(user=user, logged_at__date__gte=start_date)
-            .annotate(day=TruncDate("logged_at"))
-            .values("day")
-            .annotate(
-                total_calories=Sum("calories"),
-                meal_count=Count("id"),
-            )
-            .order_by("day")
-        )
-
-        alerts = []
-        for row in daily_stats:
-            day = row["day"]  # datetime.date
-            total_cals = row["total_calories"] or 0
-            meal_count = row["meal_count"] or 0
-
-            # Pick a severity band based on TOTAL calories that day
-            if total_cals < 1000:
-                severity = "high"
-            elif total_cals < 1600:
-                severity = "moderate"
-            else:
-                severity = "low"
-
-            alerts.append({
-                "title": f"Daily Intake – {day.strftime('%b %d, %Y')}",
-                "message": (
-                    f"Total calories on {day.strftime('%b %d, %Y')}: "
-                    f"{int(total_cals)} kcal across {meal_count} logged meal(s)."
-                ),
-                "severity": severity,
-                # created_at based on that day so older days appear lower in the list
-                "created_at": timezone.make_aware(
-                    timezone.datetime.combine(
-                        day,
-                        timezone.datetime.min.time(),
-                    )
-                ),
-            })
-
-        return alerts
 
     # ---------- core: ask Gemini whether this patient needs a WEEKLY alert ----------
 
@@ -787,6 +728,23 @@ If everything looks acceptable and no alert is needed, set:
         raw_text = result.get("response") or ""
         import json
 
+        # NEW: handle completely empty output from Gemini safely
+        if not raw_text.strip():
+            logger.error("Gemini returned empty output for provider alert assessment")
+            needs_alert = nutrition["average_calories"] < 1000
+            return {
+                "needs_alert": needs_alert,
+                "title": "Possible Low Weekly Calorie Intake" if needs_alert else None,
+                "severity": "high" if needs_alert else "low",
+                "message": (
+                    f"Average calories are about {nutrition['average_calories']} kcal/day. "
+                    "Consider reviewing this patient's intake."
+                )
+                if needs_alert
+                else "No clear weekly alert; model returned empty output.",
+                "raw": raw_text,
+            }
+
         try:
             data = json.loads(raw_text)
         except Exception as e:  # pragma: no cover
@@ -820,14 +778,19 @@ If everything looks acceptable and no alert is needed, set:
             "raw": raw_text,
         }
 
-    # ---------- public API used by your view ----------
+    # ---------- public API: one patient ----------
 
     def run_for_user(self, patient, days=7):
         """
-        Run analysis for a single patient and create ProviderAlert entries:
+        Run weekly analysis for a single patient and create ONE ProviderAlert.
 
-        - One DAILY alert per suspicious day
-        - One WEEKLY summary alert (from Gemini) at the top
+        Returns:
+            {
+              "status": "alert" | "ok" | "no_data" | "no_consent",
+              "message": str,
+              "severity": str,
+              "created_alerts": int
+            }
         """
         # 1) Respect consent
         if not self._has_consent(patient):
@@ -838,74 +801,63 @@ If everything looks acceptable and no alert is needed, set:
                 "created_alerts": 0,
             }
 
-        created = 0
-
-        # 2) DAILY rule-based alerts
-        daily_alerts = self._build_daily_alerts(patient, days=days)
-        for d in daily_alerts:
-            ProviderAlert.objects.create(
-                user=patient,
-                alert_type=d["title"],
-                message=d["message"],
-                severity=d["severity"],
-                created_at=d["created_at"],  # makes list naturally ordered by day
-            )
-            created += 1
-
-        # 3) WEEKLY Gemini-based summary (created LAST so it appears on top)
+        # 2) Ask Gemini for weekly assessment
         assessment = self._ai_nutrition_assessment(patient, days=days)
 
         if assessment is None:
-            # no weekly data, only daily ones (if any)
-            status = "no_weekly_data" if created else "no_data"
             return {
-                "status": status,
-                "message": f"No weekly nutrition summary for last {days} days.",
+                "status": "no_data",
+                "message": f"No nutrition data available for the last {days} days.",
                 "severity": "info",
-                "created_alerts": created,
+                "created_alerts": 0,
             }
 
-        if assessment["needs_alert"]:
-            ProviderAlert.objects.create(
-                user=patient,
-                alert_type=assessment["title"],
-                message=assessment["message"],
-                severity=assessment["severity"],
-                created_at=timezone.now(),  # newest – shows at top
-            )
-            created += 1
-            status = "alert"
-        else:
-            # You may or may not want to create a "everything ok" summary.
-            # Here we create it with low severity so provider still gets context.
-            ProviderAlert.objects.create(
-                user=patient,
-                alert_type=assessment["title"] or "Weekly Nutrition Summary",
-                message=assessment["message"],
-                severity=assessment["severity"],
-                created_at=timezone.now(),
-            )
-            created += 1
-            status = "ok"
+        created = 0
+
+        # Always create a weekly summary so the provider sees something
+        ProviderAlert.objects.create(
+            user=patient,
+            alert_type=assessment["title"] or "Weekly Nutrition Summary",
+            message=assessment["message"],
+            severity=assessment["severity"],
+            created_at=timezone.now(),
+        )
+        created += 1
+
+        status = "alert" if assessment["needs_alert"] else "ok"
 
         return {
             "status": status,
             "message": assessment["message"],
             "severity": assessment["severity"],
             "created_alerts": created,
-            "daily_alert_count": len(daily_alerts),
         }
+
+    # ---------- public API: all patients for this provider ----------
 
     def run_for_all_patients(self, days=7):
         """
         Run agent across all patients that this provider can access.
-        Returns the total number of new alerts created.
+        Returns a summary dict used by ProviderAlertsView.post.
         """
         patients = self._get_patients_for_provider()
+
         total_created = 0
+        processed = 0
+        no_consent = 0
 
         for p in patients:
+            if not self._has_consent(p):
+                no_consent += 1
+                continue
+
+            processed += 1
             result = self.run_for_user(p, days=days)
             total_created += result.get("created_alerts", 0)
 
-        return total_created
+        return {
+            "created_alerts_total": total_created,
+            "patients_processed": processed,
+            "patients_without_consent": no_consent,
+            "error": None,
+        }

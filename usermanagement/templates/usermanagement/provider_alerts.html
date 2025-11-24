@@ -219,7 +219,7 @@
                 <p class="text-muted mb-0">AI-assisted insights for your patients</p>
             </div>
 
-            <form method="post" action="{% url 'proactive_feat:run_ai_now' %}">
+            <form method="post" action="{% url 'usermanagement:provider_alerts' %}">
                 {% csrf_token %}
                 <button type="submit" class="btn-run">
                     ⚙️ Run AI Now

@@ -13,6 +13,9 @@ from usermanagement.utils import (
 )
 from usermanagement.models import Profile, ProviderAlert
 
+# ✅ NEW: import the AI agent
+from ai_agent.services import ProviderAlertsAgent
+
 User = get_user_model()
 
 
@@ -77,10 +80,10 @@ class ConsentView(LoginRequiredMixin, View):
 
 class ProviderAlertsView(LoginRequiredMixin, View):
     """
-    Simple view that shows ALL ProviderAlert rows for the current user.
+    Shows ALL ProviderAlert rows for the current user.
 
-    The AI is triggered separately by /proactive/run-ai/ (in proactive_feat),
-    so this view only needs a GET.
+    GET  -> just display alerts.
+    POST -> "Run AI Now" button, which triggers ProviderAlertsAgent.run_for_all_patients.
     """
     template_name = "usermanagement/provider_alerts.html"
 
@@ -88,6 +91,44 @@ class ProviderAlertsView(LoginRequiredMixin, View):
         # Show ALL alerts for this provider, newest first
         alerts = ProviderAlert.objects.filter(user=request.user).order_by("-created_at")
         return render(request, self.template_name, {"alerts": alerts})
+
+    def post(self, request):
+        """
+        Handle the 'Run AI Now' button.
+
+        IMPORTANT: this is where we call run_for_all_patients(days=7)
+        like your instructions say.
+        """
+        user = request.user
+
+        try:
+            # Create the agent for this provider
+            agent = ProviderAlertsAgent(provider_user=user)
+
+            # This may return either an int or a dict, depending on your version.
+            result = agent.run_for_all_patients(days=7)
+
+            if isinstance(result, dict):
+                created = int(result.get("created_alerts", 0) or 0)
+            else:
+                created = int(result or 0)
+
+            if created > 0:
+                messages.success(
+                    request,
+                    f"🤖 AI scan complete. {created} alert(s) created for your patients."
+                )
+            else:
+                messages.info(
+                    request,
+                    "AI scan complete. No new alerts were created."
+                )
+
+        except Exception as e:
+            messages.error(request, f"⚠️ Error while running AI: {e}")
+
+        # Always go back to the alerts page
+        return redirect("usermanagement:provider_alerts")
 
 
 # ======================================================================
