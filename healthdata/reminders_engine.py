@@ -2,6 +2,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Avg, Count
 from .models import NutritionEntry, HealthReminder
+from healthdata.transparency import TransparencyLabel
 
 
 class HealthCalculator:
@@ -11,11 +12,11 @@ class HealthCalculator:
     """
 
     ACTIVITY_MULTIPLIERS = {
-        'sedentary': 1.2,  # Little or no exercise
-        'light': 1.375,  # Light exercise 1-3 days/week
-        'moderate': 1.55,  # Moderate exercise 3-5 days/week
-        'active': 1.725,  # Hard exercise 6-7 days/week
-        'very_active': 1.9  # Very hard exercise & physical job
+        'sedentary': 1.2,      # Little or no exercise
+        'light': 1.375,        # Light exercise 1-3 days/week
+        'moderate': 1.55,      # Moderate exercise 3-5 days/week
+        'active': 1.725,       # Hard exercise 6-7 days/week
+        'very_active': 1.9     # Very hard exercise & physical job
     }
 
     @staticmethod
@@ -102,14 +103,12 @@ class GoalsIntegration:
     def has_nutrition_goals(user):
         """Check if user has set nutrition-related goals."""
         # TODO: Implement when Goals model exists
-        # Example: return user.fitness_goals.filter(goal_type='nutrition').exists()
         return False
 
     @staticmethod
     def get_calorie_target_from_goals(user):
         """Get calorie target from user's goals."""
         # TODO: Implement when Goals model exists
-        # Example: return user.fitness_goals.get(goal_type='weight').target_calories
         return None
 
     @staticmethod
@@ -270,7 +269,6 @@ class ReminderEngine:
         if not self.profile.sex:
             missing_fields.append('sex')
 
-
         if not missing_fields:
             return None
 
@@ -301,6 +299,9 @@ class ReminderEngine:
                 'Save your changes to unlock personalized insights'
             ]
         )
+
+        # ✅ attach transparency metadata
+        TransparencyLabel.add_transparency_to_reminder(reminder)
         return reminder
 
     def get_calorie_target(self):
@@ -369,7 +370,10 @@ class ReminderEngine:
                 user=self.user,
                 reminder_type='nutrition',
                 title='Low Calorie Intake Detected',
-                message=f'Your 7-day average is {avg_calories:.0f} cal/day, about {deficit:.0f} calories below your target of {target_calories:.0f} cal/day.',
+                message=(
+                    f'Your 7-day average is {avg_calories:.0f} cal/day, about '
+                    f'{deficit:.0f} calories below your target of {target_calories:.0f} cal/day.'
+                ),
                 explanation=self.explanation_gen.get_low_calorie_explanation(
                     avg_calories,
                     target_calories,
@@ -385,6 +389,9 @@ class ReminderEngine:
                     'Consider consulting a nutritionist if this pattern continues'
                 ]
             )
+
+            # ✅ attach transparency metadata for nutrition reminder
+            TransparencyLabel.add_transparency_to_reminder(reminder)
             return reminder
 
         return None
@@ -415,7 +422,10 @@ class ReminderEngine:
                 user=self.user,
                 reminder_type='general',
                 title='Keep Up Your Logging Streak',
-                message=f'You\'ve logged meals on {days_with_entries} out of the last 7 days. Consistency helps us give you better insights!',
+                message=(
+                    f'You\'ve logged meals on {days_with_entries} out of the last 7 days. '
+                    f'Consistency helps us give you better insights!'
+                ),
                 explanation=self.explanation_gen.get_inconsistent_logging_explanation(
                     days_with_entries,
                     7
@@ -426,9 +436,12 @@ class ReminderEngine:
                     'Log meals immediately after eating (don\'t wait until end of day)',
                     'Start small: commit to logging just breakfast every day this week',
                     'Use the app\'s quick-entry feature for common meals',
-                    f'Goal: Log at least 6 out of 7 days per week'
+                    'Goal: Log at least 6 out of 7 days per week'
                 ]
             )
+
+            # ✅ attach transparency metadata (will at least include timestamp)
+            TransparencyLabel.add_transparency_to_reminder(reminder)
             return reminder
 
         return None
@@ -471,7 +484,10 @@ class ReminderEngine:
                 user=self.user,
                 reminder_type='nutrition',
                 title='Increase Your Protein Intake',
-                message=f'Your average protein intake is {avg_protein:.1f}g/day. Target: {target_protein:.0f}g/day based on your profile.',
+                message=(
+                    f'Your average protein intake is {avg_protein:.1f}g/day. '
+                    f'Target: {target_protein:.0f}g/day based on your profile.'
+                ),
                 explanation=self.explanation_gen.get_low_protein_explanation(
                     float(avg_protein),
                     float(target_protein),
@@ -487,6 +503,9 @@ class ReminderEngine:
                     'Consider a protein shake if needed (20-25g)'
                 ]
             )
+
+            # ✅ attach transparency metadata for protein reminder
+            TransparencyLabel.add_transparency_to_reminder(reminder)
             return reminder
 
         return None

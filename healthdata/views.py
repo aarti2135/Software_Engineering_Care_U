@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
@@ -30,7 +30,8 @@ from .serializers import (
 from .forms import NutritionEntryForm, GoalForm
 from .reminders_engine import ReminderEngine
 from ai_agent.services import AIAgentService, SAFETY_DISCLAIMER
-
+from healthdata.export_service import HealthReportGenerator
+from healthdata.transparency import TransparencyLabel
 
 logger = logging.getLogger(__name__)
 
@@ -226,8 +227,6 @@ def nutrition_dashboard(request):
             "week_end": week_end,
         },
     )
-
-
 
 
 # ----------------------------------------------------------------------
@@ -474,8 +473,10 @@ def act_on_reminder(request, pk):
 class GlucoseEntryViewSet(viewsets.ModelViewSet):
     serializer_class = GlucoseEntrySerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         return GlucoseEntry.objects.filter(user=self.request.user).order_by("-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -483,8 +484,12 @@ class GlucoseEntryViewSet(viewsets.ModelViewSet):
 class MedicationEntryViewSet(viewsets.ModelViewSet):
     serializer_class = MedicationEntrySerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
-        return MedicationEntry.objects.filter(user=self.request.user).order_by("-time_taken", "-created_at")
+        return MedicationEntry.objects.filter(
+            user=self.request.user
+        ).order_by("-time_taken", "-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -492,8 +497,10 @@ class MedicationEntryViewSet(viewsets.ModelViewSet):
 class DoctorNoteViewSet(viewsets.ModelViewSet):
     serializer_class = DoctorNoteSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         return DoctorNote.objects.filter(user=self.request.user).order_by("-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -501,8 +508,10 @@ class DoctorNoteViewSet(viewsets.ModelViewSet):
 class VitalLogViewSet(viewsets.ModelViewSet):
     serializer_class = VitalLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         return VitalLog.objects.filter(user=self.request.user).order_by("-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -510,8 +519,10 @@ class VitalLogViewSet(viewsets.ModelViewSet):
 class MoodLogViewSet(viewsets.ModelViewSet):
     serializer_class = MoodLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         return MoodLog.objects.filter(user=self.request.user).order_by("-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -519,8 +530,10 @@ class MoodLogViewSet(viewsets.ModelViewSet):
 class SymptomLogViewSet(viewsets.ModelViewSet):
     serializer_class = SymptomLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         return SymptomLog.objects.filter(user=self.request.user).order_by("-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -528,8 +541,12 @@ class SymptomLogViewSet(viewsets.ModelViewSet):
 class HabitLogViewSet(viewsets.ModelViewSet):
     serializer_class = HabitLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
-        return HabitLog.objects.filter(user=self.request.user).order_by("-date", "-created_at")
+        return HabitLog.objects.filter(
+            user=self.request.user
+        ).order_by("-date", "-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -537,8 +554,12 @@ class HabitLogViewSet(viewsets.ModelViewSet):
 class WellbeingLogViewSet(viewsets.ModelViewSet):
     serializer_class = WellbeingLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
-        return WellbeingLog.objects.filter(user=self.request.user).order_by("-date", "-created_at")
+        return WellbeingLog.objects.filter(
+            user=self.request.user
+        ).order_by("-date", "-created_at")
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
@@ -727,3 +748,51 @@ def _parse_discussion_response(response_text):
         topics['observations'] = ['Unable to parse AI response. Please try again.']
 
     return topics
+
+
+# ----------------------------------------------------------------------
+# 🔹 Export & Transparency Views
+# ----------------------------------------------------------------------
+@login_required
+def export_dashboard(request):
+    """Export dashboard page."""
+    return render(request, 'healthdata/export_dashboard.html')
+
+
+@login_required
+def generate_health_report(request):
+    """Generate PDF report."""
+    try:
+        days = int(request.GET.get('days', 30))
+        days = max(7, min(days, 90))
+
+        generator = HealthReportGenerator(request.user, days=days)
+        pdf_buffer = generator.generate_pdf()
+
+        response = HttpResponse(pdf_buffer, content_type='application/pdf')
+        filename = f"CareU_Report_{request.user.username}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+
+@login_required
+def get_reminder_transparency(request, reminder_id):
+    """Get transparency info for a reminder."""
+    from healthdata.models import HealthReminder
+
+    try:
+        reminder = HealthReminder.objects.get(id=reminder_id, user=request.user)
+        transparency_info = TransparencyLabel.get_label_for_reminder(reminder)
+
+        return JsonResponse({
+            'success': True,
+            'reminder_id': reminder_id,
+            'transparency': transparency_info
+        })
+    except HealthReminder.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

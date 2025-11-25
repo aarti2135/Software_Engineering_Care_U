@@ -21,7 +21,7 @@
 
     .dashboard-container {
       display: grid;
-      grid-template-columns: 80px 1fr 300px;
+      grid-template-columns: 80px 1fr;
       min-height: 100vh;
     }
 
@@ -35,6 +35,20 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      z-index: 1000;
+    }
+
+    .user-avatar {
+      background: linear-gradient(135deg, #007AFF, #5856D6);
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
     }
 
     .nav-icon {
@@ -51,11 +65,13 @@
       font-size: 20px;
       position: relative;
     }
+
     .nav-icon:hover,
     .nav-icon.active {
       background: #e5e5ea;
       color: #1C1C1E;
     }
+
     .nav-icon:hover::after {
       content: attr(data-tooltip);
       position: absolute;
@@ -72,10 +88,69 @@
       z-index: 1001;
     }
 
+    /* Export icon special styling (kept for quick action card, not sidebar) */
+    .nav-icon.export-icon {
+      font-size: 24px;
+    }
+
     .main-content {
       grid-column: 2;
       padding: 2rem;
       margin-left: 80px;
+      max-width: 1200px;
+    }
+
+    /* Banner for Export feature */
+    .export-banner {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .export-banner-content {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .export-banner h5 {
+      margin: 0 0 0.5rem 0;
+      font-weight: 600;
+      font-size: 1.25rem;
+    }
+
+    .export-banner p {
+      margin: 0;
+      opacity: 0.95;
+      font-size: 0.95rem;
+    }
+
+    .btn-export {
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 12px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-export:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      color: #667eea;
     }
 
     .card-metric {
@@ -85,6 +160,12 @@
       text-align: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       margin-bottom: 2rem;
+      transition: all 0.2s ease;
+    }
+
+    .card-metric:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
     }
 
     .chart-container {
@@ -105,9 +186,12 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.05);
       transition: all 0.2s ease;
     }
+
     .btn-nav:hover {
       background: #007AFF;
       color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,122,255,0.3);
     }
 
     .btn-analytics {
@@ -118,11 +202,15 @@
       font-weight: 500;
       display: inline-block;
       text-decoration: none;
-      transition: background 0.3s ease;
+      transition: all 0.3s ease;
       box-shadow: 0 4px 10px rgba(0,122,255,0.3);
     }
+
     .btn-analytics:hover {
       background: #005FCC;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,122,255,0.4);
     }
 
     a.latest-goal-link {
@@ -135,19 +223,104 @@
       transition: all 0.3s ease;
       cursor: pointer;
     }
+
+    /* Quick Action Cards */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .quick-action-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+
+    .quick-action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .quick-action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .quick-action-icon.export {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .quick-action-icon.nutrition {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .quick-action-icon.goals {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .quick-action-icon.analytics {
+      background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+
+    .quick-action-content h6 {
+      margin: 0 0 0.25rem 0;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .quick-action-content p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #8E8E93;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar-left {
+        display: none;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+
+      .export-banner {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 
 <body>
 <div class="dashboard-container">
 
-  <!-- Sidebar (standardized with other dashboards) -->
+  <!-- Sidebar -->
   <nav class="sidebar-left">
-    <div class="user-avatar mb-3" style="background:linear-gradient(135deg,#007AFF,#5856D6);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;">
+    <div class="user-avatar">
       {{ request.user.username|first|upper }}
     </div>
 
-    <!-- Standardized nav order: Home, Analytics, Nutrition, Goals, Reminders, Chats, Consent, Settings, Logout -->
     <a href="{% url 'dashboard' %}" class="nav-icon active" data-tooltip="Home">
       <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
     </a>
@@ -166,6 +339,7 @@
     <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon" data-tooltip="Chats">
       <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
     </a>
+    <!-- Export icon removed from sidebar -->
     <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
       <img src="{% static 'img/consent_icon.png' %}" alt="Consent" width="22" height="22">
     </a>
@@ -181,6 +355,18 @@
   <main class="main-content">
     <h3 class="fw-semibold mb-4">Welcome back, {{ request.user.username|title }} 👋</h3>
 
+    <!-- Export Banner -->
+    <div class="export-banner">
+      <div class="export-banner-content">
+        <h5>📄 Prepare for Your Doctor Visit</h5>
+        <p>Generate a comprehensive health report with all your data, trends, and AI insights</p>
+      </div>
+      <a href="{% url 'export_dashboard' %}" class="btn-export">
+        📥 Export Health Report
+      </a>
+    </div>
+
+    <!-- Health Metrics -->
     <div class="row g-4">
       <!-- Steps Chart -->
       <div class="col-md-6">
@@ -218,19 +404,63 @@
       </div>
     </a>
 
-    <!-- Quick Access -->
-    <div class="mt-4 text-center">
-      <h5 class="mb-3 text-start">Quick Access</h5>
+    <!-- Quick Actions Grid -->
+    <div class="mt-4">
+      <h5 class="mb-3">Quick Actions</h5>
+      <div class="quick-actions-grid">
+
+        <!-- Export Card -->
+        <a href="{% url 'export_dashboard' %}" class="quick-action-card">
+          <div class="quick-action-icon export">📄</div>
+          <div class="quick-action-content">
+            <h6>Export Report</h6>
+            <p>Generate PDF for doctor</p>
+          </div>
+        </a>
+
+        <!-- Nutrition Card -->
+        <a href="{% url 'nutrition_dashboard' %}" class="quick-action-card">
+          <div class="quick-action-icon nutrition">🍎</div>
+          <div class="quick-action-content">
+            <h6>Nutrition</h6>
+            <p>Track your meals</p>
+          </div>
+        </a>
+
+        <!-- Goals Card -->
+        <a href="{% url 'goal_dashboard' %}" class="quick-action-card">
+          <div class="quick-action-icon goals">🎯</div>
+          <div class="quick-action-content">
+            <h6>Goals</h6>
+            <p>Track your progress</p>
+          </div>
+        </a>
+
+        <!-- Analytics Card -->
+        <a href="{% url 'analytics:analytics_dashboard' %}" class="quick-action-card">
+          <div class="quick-action-icon analytics">📊</div>
+          <div class="quick-action-content">
+            <h6>Analytics</h6>
+            <p>View trends & insights</p>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- All Features -->
+    <div class="mt-5 text-center">
+      <h5 class="mb-3 text-start">All Features</h5>
       <div class="d-grid gap-3 col-md-6 mx-auto">
         <a href="{% url 'nutrition_dashboard' %}" class="btn-nav">🍎 Nutrition Dashboard</a>
         <a href="{% url 'goal_dashboard' %}" class="btn-nav">🎯 Goals</a>
-        <!-- ✅ Fixed namespaced link -->
         <a href="{% url 'analytics:analytics_dashboard' %}" class="btn-nav">📊 Analytics Dashboard</a>
         <a href="{% url 'reminders_dashboard' %}" class="btn-nav">🔔 Reminders</a>
-        <a href="{% url 'proactive_feat:pro_launcher' %}" class="btn-nav">🤖 AI & Proactive Health</a>
+
+
       </div>
 
-      <!-- ✅ Updated Analytics Button -->
+      <!-- Featured Analytics Button -->
       <div class="mt-5">
         <a href="{% url 'analytics:analytics_dashboard' %}" class="btn-analytics">
           📊 View Analytics Dashboard

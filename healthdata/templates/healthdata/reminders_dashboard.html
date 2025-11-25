@@ -1,0 +1,161 @@
+<!-- templates/healthdata/reminders_dashboard.html -->
+<!-- ADD THIS SECTION to your existing reminders template -->
+
+<!-- Enhanced Reminder Card with Transparency -->
+<div class="reminder-card priority-{{ reminder.priority }}">
+  <div class="reminder-header">
+    <div class="reminder-icon icon-{{ reminder.reminder_type }}">
+      {% if reminder.reminder_type == 'nutrition' %}🍎
+      {% elif reminder.reminder_type == 'activity' %}🏃
+      {% else %}💡{% endif %}
+    </div>
+    <div class="reminder-content">
+      <div class="reminder-title">{{ reminder.title }}</div>
+      <div class="reminder-message">{{ reminder.message }}</div>
+
+      <!-- ✅ NEW: Transparency Label -->
+      <div class="transparency-section mt-2">
+        <div class="transparency-label">
+          {% with label=reminder.get_transparency_label %}
+            <span class="badge bg-info text-dark">
+              {{ label.short_label }}
+            </span>
+
+            <!-- Why am I seeing this? button -->
+            <button
+              type="button"
+              class="btn btn-sm btn-link transparency-toggle"
+              data-bs-toggle="collapse"
+              data-bs-target="#transparency-{{ reminder.id }}"
+              data-reminder-id="{{ reminder.id }}"
+            >
+              <small>ℹ️ Why am I seeing this?</small>
+            </button>
+          {% endwith %}
+        </div>
+
+        <!-- Collapsible transparency details -->
+        <div class="collapse transparency-details" id="transparency-{{ reminder.id }}">
+          <div class="card card-body mt-2 bg-light">
+            <div id="transparency-content-{{ reminder.id }}">
+              <p class="small text-muted mb-0">
+                <em>Loading transparency information...</em>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rest of reminder card (existing code) -->
+  <div class="reminder-actions">
+    <form method="post" action="{% url 'act_on_reminder' reminder.id %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-action btn-done">✓ Done</button>
+    </form>
+    <form method="post" action="{% url 'dismiss_reminder' reminder.id %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-action btn-dismiss">Dismiss</button>
+    </form>
+  </div>
+</div>
+
+<style>
+/* Transparency section styles */
+.transparency-section {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.transparency-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.transparency-toggle {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.transparency-toggle:hover {
+  text-decoration: underline;
+}
+
+.transparency-details {
+  margin-top: 0.5rem;
+}
+
+.transparency-details .card-body {
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.transparency-details ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+}
+
+.transparency-details li {
+  margin-bottom: 0.25rem;
+}
+</style>
+
+<script>
+// Load transparency details when user clicks "Why am I seeing this?"
+document.addEventListener('shown.bs.collapse', async function (event) {
+  const targetId = event.target.id;
+
+  // Check if this is a transparency collapse
+  if (!targetId.startsWith('transparency-')) return;
+
+  const reminderId = targetId.replace('transparency-', '');
+  const contentDiv = document.getElementById(`transparency-content-${reminderId}`);
+
+  // Only fetch once
+  if (contentDiv.dataset.loaded === 'true') return;
+
+  try {
+    const response = await fetch(`/dashboard/reminders/${reminderId}/transparency/`, {
+      credentials: 'same-origin'
+    });
+
+    if (!response.ok) throw new Error('Failed to load transparency info');
+
+    const data = await response.json();
+
+    if (data.success) {
+      const trans = data.transparency;
+
+      let html = `
+        <p class="mb-2"><strong>${trans.label}</strong></p>
+        <p class="small">${trans.explanation}</p>
+      `;
+
+      if (trans.data_points && trans.data_points.length > 0) {
+        html += '<p class="small mb-1"><strong>Data used:</strong></p>';
+        html += '<ul class="small">';
+        trans.data_points.forEach(point => {
+          html += `<li>${point}</li>`;
+        });
+        html += '</ul>';
+      }
+
+      contentDiv.innerHTML = html;
+      contentDiv.dataset.loaded = 'true';
+    }
+  } catch (error) {
+    console.error('Error loading transparency info:', error);
+    contentDiv.innerHTML = `
+      <p class="small text-danger">
+        Unable to load transparency information. Please try again.
+      </p>
+    `;
+  }
+});
+</script>

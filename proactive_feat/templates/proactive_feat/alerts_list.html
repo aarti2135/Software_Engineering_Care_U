@@ -1,229 +1,481 @@
-<!DOCTYPE html>
+{% load static %}
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Alerts · CareU</title>
 
-  {% load static %}
+  <!-- Bootstrap + Inter to match dashboards -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <style>
-    :root{
-      --bg:#f6f8fb; --ink:#0f172a; --muted:#6b7280;
-      --brand1:#0ea5e9; --brand2:#6366f1;
-      --panel:#ffffff; --border:#e5e7eb; --shadow:0 10px 24px rgba(0,0,0,.08);
-      --pill:#111827; --pill-ink:#fff;
+    :root {
+      --primary: #007AFF;
+      --secondary: #5856D6;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --text-primary: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --card-radius: 16px;
+      --sidebar-width: 80px;
     }
-    body{margin:0;background:var(--bg);color:var(--ink);
-         font-family: ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial}
 
-    header{background:#0d1117;color:#fff;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
-    header h1{margin:0;font-size:18px;letter-spacing:.3px}
-    header nav{display:flex;gap:10px;align-items:center}
-    header nav .btn{border:0;border-radius:10px;padding:8px 12px;cursor:pointer}
-    header nav .btn-primary{background:#2563eb;color:#fff}
-    header nav .btn-primary:hover{background:#1e40af}
-    header .muted{opacity:.85;font-size:.9rem}
-
-    main{max-width:1040px;margin:22px auto;padding:0 14px}
-
-    /* Hero */
-    .hero{
-      background:linear-gradient(135deg,var(--brand1),var(--brand2));
-      color:#fff;border-radius:16px;padding:18px;box-shadow:var(--shadow);
-      display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap
+    body {
+      margin: 0;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    .hero-left{display:flex;gap:12px;align-items:center}
-    .hero img{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15)}
-    .hero h2{margin:0;font-size:20px;letter-spacing:.2px}
-    .hero .sub{opacity:.9;font-weight:600;font-size:.95rem}
-    .actions{display:flex;gap:8px}
-    .btn{border-radius:10px;padding:8px 12px;border:1px solid transparent;cursor:pointer;text-decoration:none}
-    .btn-light{background:#f3f4f6;color:#111827;border-color:#e5e7eb}
-    .btn-light:hover{filter:brightness(.98)}
 
-    /* Preview bar */
-    .preview{
-      display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:16px
+    /* Layout */
+    .app-container {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
     }
-    .stats, .peek{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
-    .stats .body, .peek .body{padding:14px 16px}
-    .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .pill{
-      background:#111827;color:#fff;border-radius:12px;padding:10px 12px;
-      display:flex;align-items:center;justify-content:space-between;gap:8px
+
+    /* Sidebar (same as dashboards) */
+    .sidebar-left {
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      padding: 2rem 0;
+      position: fixed;
+      width: var(--sidebar-width);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .pill .k{opacity:.9;font-size:.86rem}
-    .pill .v{font-weight:700}
-    .pill.alt{background:#1f2937}
-    .pill.warn{background:#b91c1c}
-    .pill.today{background:#0ea5e9}
 
-    .peek h6{margin:0 0 8px 0;font-size:.95rem;font-weight:700}
-    .peek-list{display:flex;flex-direction:column;gap:8px}
-    .peek-item{display:flex;gap:10px;align-items:flex-start}
-    .peek-badge{font-size:11px;padding:2px 7px;border-radius:999px}
-    .peek .meta{color:var(--muted);font-size:.85rem}
-
-    /* Main list panel */
-    .panel{margin-top:16px;background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
-    .panel .panel-body{padding:14px 16px}
-
-    .row-card{
-      display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
-      padding:12px 14px;border:1px solid #eef2f7;border-radius:12px;background:#fff;
-      box-shadow:0 1px 0 rgba(15,23,42,.03);transition:transform .15s ease,box-shadow .15s ease
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-bottom: 1rem;
     }
-    .row-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.06)}
-    .row-card + .row-card{margin-top:10px}
-    .badge{font-size:12px;padding:3px 8px;border-radius:999px;margin-right:6px}
-    .bg-danger{background:#fee2e2;color:#991b1b}
-    .bg-warning{background:#fef3c7;color:#92400e}
-    .bg-info{background:#dbeafe;color:#1e3a8a}
-    .meta{color:var(--muted);font-size:13px;margin-top:4px}
-    .btn-primary{background:var(--pill);color:var(--pill-ink);border:1px solid var(--pill)}
-    .btn-primary:hover{filter:brightness(1.05)}
+
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .nav-icon:hover,
+    .nav-icon.active {
+      background: #e5e5ea;
+      color: var(--text-primary);
+    }
+
+    .nav-icon .alert-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--danger);
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(255, 59, 48, 0.4);
+    }
+
+    .main-content {
+      grid-column: 2;
+      padding: 2rem;
+      margin-left: var(--sidebar-width);
+    }
+
+    .card {
+      border: 0;
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      background: var(--bg-primary);
+    }
+
+    /* Page header / hero */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .page-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .page-title h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .page-title span {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Info banner */
+    .info-banner {
+      border-radius: 12px;
+      border: 0;
+      box-shadow: 0 4px 12px rgba(20,40,80,.06);
+      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+      color: #1C1C1E;
+    }
+
+    /* Preview stats + peek */
+    .preview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .pill-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .pill {
+      border-radius: 12px;
+      padding: 0.7rem 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: white;
+    }
+
+    .pill span.v {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .pill.today { background: #0ea5e9; }
+    .pill.unread { background: #111827; }
+    .pill.abnormal { background: #b91c1c; }
+
+    .peek-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 0 0 0.75rem 0;
+    }
+
+    .peek-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .peek-item {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+    }
+
+    .peek-badge {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .peek-meta {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      margin-top: 2px;
+    }
+
+    /* Full alerts list */
+    .row-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid #eef2f7;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 1px 0 rgba(15,23,42,.03);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .row-card + .row-card {
+      margin-top: 0.6rem;
+    }
+
+    .row-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      margin-right: 6px;
+    }
+
+    .bg-danger-soft { background:#fee2e2; color:#991b1b; }
+    .bg-warning-soft { background:#fef3c7; color:#92400e; }
+    .bg-info-soft    { background:#dbeafe; color:#1e3a8a; }
+
+    .meta {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      margin-top: 3px;
+    }
+
+    .btn-sm {
+      border-radius: 999px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem;
+    }
 
     /* Toast */
-    #pro-toast{
-      position:fixed;right:18px;bottom:18px;background:#111827;color:#fff;
-      padding:10px 14px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.18);
-      display:none;z-index:9999
+    #pro-toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.18);
+      display: none;
+      z-index: 9999;
+      font-size: 0.85rem;
+      font-weight: 500;
     }
 
-    @media (max-width: 820px){
-      .preview{grid-template-columns:1fr}
-      .stat-row{grid-template-columns:1fr 1fr 1fr}
+    @media (max-width: 900px) {
+      .preview-grid {
+        grid-template-columns: minmax(0,1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 1.5rem 1.25rem;
+      }
+
+      .pill-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 576px) {
+      .pill-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>CareU</h1>
-    <nav>
-      <span class="muted">Signed in as <strong>{{ request.user.username }}</strong></span>
-      <form action="{% url 'User_Login:logout' %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">Logout</button>
-      </form>
+  <div class="app-container">
+    <!-- Sidebar (same as Nutrition Dashboard) -->
+    <nav class="sidebar-left">
+      <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+
+      <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+        <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
+      </a>
+      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+        <img src="{% static 'img/analytics_icon.png' %}" alt="Analytics" width="22" height="22">
+      </a>
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Nutrition">
+        <img src="{% static 'img/nutrition_icon.png' %}" alt="Nutrition" width="22" height="22">
+      </a>
+      <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+        <img src="{% static 'img/goals_icon.png' %}" alt="Goals" width="22" height="22">
+      </a>
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
+        <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
+        <span class="alert-badge" id="reminders-badge" style="display:none;">0</span>
+      </a>
+      <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon" data-tooltip="Chats">
+        <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
+      </a>
+      <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
+        <img src="{% static 'img/consent_icon.png' %}" alt="Consent" width="22" height="22">
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Settings">
+        <img src="{% static 'img/settings_icon.png' %}" alt="Settings" width="22" height="22">
+      </a>
+      <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+        <img src="{% static 'img/logout_icon.png' %}" alt="Logout" width="22" height="22">
+      </a>
     </nav>
-  </header>
 
-  <main>
-    <!-- HERO -->
-    <div class="hero">
-      <div class="hero-left">
-        <img src="{% static 'img/careu-logo.svg' %}" alt="CareU">
-        <div>
-          <div class="sub">Proactive Health</div>
-          <h2>Alerts Center</h2>
+    <!-- Main content -->
+    <main class="main-content">
+      <!-- Page header -->
+      <div class="page-header">
+        <div class="page-title">
+          <h1>Alerts Center</h1>
+          <span>Review proactive health alerts generated from your vitals and habits.</span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'nutrition_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            ← Back to Nutrition
+          </a>
         </div>
       </div>
-      <div class="actions">
-        <a class="btn btn-light" href="{% url 'nutrition_dashboard' %}">← Return to Home</a>
-      </div>
-    </div>
 
-    <!-- PREVIEW (auto-fills via JS from the list below) -->
-    <section class="preview" aria-label="Alerts preview">
-      <div class="stats">
-        <div class="body">
-          <div class="stat-row">
-            <div class="pill today">
-              <span class="k">Today</span>
-              <span class="v" id="pv-today">0</span>
-            </div>
-            <div class="pill">
-              <span class="k">Unread</span>
-              <span class="v" id="pv-unread">0</span>
-            </div>
-            <div class="pill warn">
-              <span class="k">Abnormal</span>
-              <span class="v" id="pv-abnormal">0</span>
+      <!-- Info banner -->
+      <div class="alert info-banner d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-2">
+          <span style="font-size:1.6rem;">🔔</span>
+          <div>
+            <strong>Proactive Health Alerts</strong>
+            <p class="mb-0 small">We’ll surface abnormal vitals, missed logs, and trends that may need attention.</p>
+          </div>
+        </div>
+        <span class="small text-muted d-none d-md-inline">Signed in as <strong>{{ request.user.username }}</strong></span>
+      </div>
+
+      <!-- Preview stats + peek -->
+      <section class="preview-grid" aria-label="Alerts preview">
+        <!-- Stats card -->
+        <div class="card">
+          <div class="card-body">
+            <div class="pill-row">
+              <div class="pill today">
+                <span class="k">Today</span>
+                <span class="v" id="pv-today">0</span>
+              </div>
+              <div class="pill unread">
+                <span class="k">Unread</span>
+                <span class="v" id="pv-unread">0</span>
+              </div>
+              <div class="pill abnormal">
+                <span class="k">Abnormal</span>
+                <span class="v" id="pv-abnormal">0</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="peek">
-        <div class="body">
-          <h6>Latest alerts</h6>
-          <div class="peek-list" id="peek-list">
-            <!-- JS will inject top 3 -->
+        <!-- Peek card -->
+        <div class="card">
+          <div class="card-body">
+            <p class="peek-title mb-2">Latest alerts</p>
+            <div class="peek-list" id="peek-list">
+              <!-- JS injects top 3 -->
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- FULL LIST -->
-    <section class="panel">
-      <div class="panel-body">
-        <div class="list" id="alerts-list">
-          {% if alerts %}
-            {% for a in alerts %}
-              <div class="row-card"
-                   id="alert-{{ a.id }}"
-                   data-type="{{ a.alert_type }}"
-                   data-created="{{ a.created_at|date:'Y-m-d' }}"
-                   data-read="{% if a.is_read %}1{% else %}0{% endif %}">
-                <div>
-                  <div class="fw-semibold">
-                    {% if a.alert_type == "threshold" %}
-                      <span class="badge bg-danger">Abnormal</span>
-                    {% elif a.alert_type == "missed_log" %}
-                      <span class="badge bg-warning">Missed</span>
-                    {% elif a.alert_type == "trend" %}
-                      <span class="badge bg-info">Trend</span>
-                    {% endif %}
-                    {{ a.message }}
+      <!-- Full alerts list -->
+      <section class="card mt-4">
+        <div class="card-body">
+          <div id="alerts-list">
+            {% if alerts %}
+              {% for a in alerts %}
+                <div class="row-card"
+                     id="alert-{{ a.id }}"
+                     data-type="{{ a.alert_type }}"
+                     data-created="{{ a.created_at|date:'Y-m-d' }}"
+                     data-read="{% if a.is_read %}1{% else %}0{% endif %}">
+                  <div>
+                    <div class="fw-semibold">
+                      {% if a.alert_type == "threshold" %}
+                        <span class="badge bg-danger-soft">Abnormal</span>
+                      {% elif a.alert_type == "missed_log" %}
+                        <span class="badge bg-warning-soft">Missed</span>
+                      {% elif a.alert_type == "trend" %}
+                        <span class="badge bg-info-soft">Trend</span>
+                      {% endif %}
+                      {{ a.message }}
+                    </div>
+                    <div class="meta">{{ a.created_at|date:"M j, Y · g:i a" }}</div>
                   </div>
-                  <div class="meta">{{ a.created_at|date:"M j, Y · g:i a" }}</div>
+                  {% if not a.is_read %}
+                    <button class="btn btn-primary btn-sm" onclick="proMarkRead({{ a.id }})">
+                      Mark read
+                    </button>
+                  {% endif %}
                 </div>
-                {% if not a.is_read %}
-                  <button class="btn btn-primary btn-sm" onclick="proMarkRead({{ a.id }})">Mark read</button>
-                {% endif %}
+              {% endfor %}
+            {% else %}
+              <div class="row-card" style="justify-content:flex-start;gap:10px;">
+                <div style="font-size:20px">🎉</div>
+                <div>
+                  <div class="fw-semibold">No alerts</div>
+                  <div class="meta">All clear — we’ll notify you if anything needs attention.</div>
+                </div>
               </div>
-            {% endfor %}
-          {% else %}
-            <div class="row-card" style="justify-content:flex-start;gap:10px;">
-              <div style="font-size:20px">🎉</div>
-              <div>
-                <div class="fw-semibold">No alerts</div>
-                <div class="meta">All set — we’ll notify you if anything needs attention.</div>
-              </div>
-            </div>
-          {% endif %}
+            {% endif %}
+          </div>
         </div>
-      </div>
-    </section>
-  </main>
+      </section>
+    </main>
+  </div>
 
   <!-- Toast -->
   <div id="pro-toast">Marked as read</div>
 
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    // Inline mark-read (unchanged)
-    async function proMarkRead(id){
-      try{
-        const res = await fetch(`/proactive/alerts/mark-read/${id}/`, {credentials:"same-origin"});
+    // Inline mark-read
+    async function proMarkRead(id) {
+      try {
+        const res = await fetch(`/proactive/alerts/mark-read/${id}/`, { credentials: "same-origin" });
         const data = await res.json();
-        if (data.ok){
+        if (data.ok) {
           const row = document.getElementById(`alert-${id}`);
           if (row) row.remove();
           updatePreview(); // refresh counts/peek
+
           const t = document.getElementById('pro-toast');
-          if (t){ t.style.display='block'; setTimeout(()=> t.style.display='none', 1400); }
+          if (t) {
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 1400);
+          }
         }
-      }catch(e){ console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     // Preview: compute Today / Unread / Abnormal and inject top 3 latest
-    function updatePreview(){
+    function updatePreview() {
       const rows = Array.from(document.querySelectorAll('#alerts-list .row-card'));
-      const todayStr = new Date().toISOString().slice(0,10);
-      let today=0, unread=0, abnormal=0;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      let today = 0, unread = 0, abnormal = 0;
 
-      // Build objects for preview items
       const items = rows.map(r => ({
         id: r.id,
         type: r.dataset.type,
@@ -233,30 +485,42 @@
         meta: r.querySelector('.meta')?.innerText.trim() || ''
       }));
 
-      // Counts
-      items.forEach(it=>{
+      items.forEach(it => {
         if (!it.read) unread++;
         if (it.created === todayStr) today++;
         if (it.type === 'threshold') abnormal++;
       });
 
-      document.getElementById('pv-today').textContent = today;
-      document.getElementById('pv-unread').textContent = unread;
-      document.getElementById('pv-abnormal').textContent = abnormal;
+      const todayEl = document.getElementById('pv-today');
+      const unreadEl = document.getElementById('pv-unread');
+      const abnormalEl = document.getElementById('pv-abnormal');
 
-      // Latest 3 by DOM order (assuming newest first in queryset)
+      if (todayEl) todayEl.textContent = today;
+      if (unreadEl) unreadEl.textContent = unread;
+      if (abnormalEl) abnormalEl.textContent = abnormal;
+
       const peek = document.getElementById('peek-list');
-      peek.innerHTML = items.slice(0,3).map(it=>{
+      if (!peek) return;
+
+      if (items.length === 0) {
+        peek.innerHTML = `
+          <div class="text-muted small">No alerts yet. Once your vitals generate alerts, the latest ones will appear here.</div>
+        `;
+        return;
+      }
+
+      peek.innerHTML = items.slice(0, 3).map(it => {
         const badge =
           it.type === 'threshold' ? '<span class="peek-badge" style="background:#fee2e2;color:#991b1b">Abnormal</span>' :
           it.type === 'missed_log' ? '<span class="peek-badge" style="background:#fef3c7;color:#92400e">Missed</span>' :
           '<span class="peek-badge" style="background:#dbeafe;color:#1e3a8a">Trend</span>';
+
         return `
           <div class="peek-item">
             ${badge}
             <div>
-              <div style="font-weight:600">${it.title}</div>
-              <div class="meta">${it.meta}</div>
+              <div style="font-weight:600;font-size:0.9rem;">${it.title}</div>
+              <div class="peek-meta">${it.meta}</div>
             </div>
           </div>
         `;
@@ -264,9 +528,10 @@
     }
 
     // Initial hydrate
-    updatePreview();
+    document.addEventListener('DOMContentLoaded', updatePreview);
   </script>
 
+  <!-- If you have extra JS for alerts, keep this -->
   <script src="{% static 'proactive_feat/alerts.js' %}"></script>
 </body>
 </html>

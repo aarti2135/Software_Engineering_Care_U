@@ -40,6 +40,11 @@ class NutritionEntry(models.Model):
 
 class HealthReminder(models.Model):
     """Stores personalized health reminders for users."""
+
+    def get_transparency_label(self):
+        """Get transparency information for this reminder."""
+        from healthdata.transparency import TransparencyLabel
+        return TransparencyLabel.get_label_for_reminder(self)
     REMINDER_TYPES = [
         ('nutrition', 'Nutrition'),
         ('activity', 'Activity'),

@@ -40,6 +40,21 @@ urlpatterns = [
     #path('api/doctor-discussion/', views.generate_doctor_discussion, name='generate_doctor_discussion'),
     path('doctor-discussion/', views.generate_doctor_discussion, name='generate_doctor_discussion'),
 
+    #Export Data
+path('export/', views.export_dashboard, name='export_dashboard'),
+    path('export/generate/', views.generate_health_report, name='generate_health_report'),
+    path('reminders/<int:reminder_id>/transparency/', views.get_reminder_transparency, name='reminder_transparency'),
+
     # API
     path('', include(router.urls)),
 ]
+
+# Export & Transparency Endpoints
+path('export/', views.export_dashboard, name='export_dashboard'),
+path('export/generate/', views.generate_health_report, name='generate_health_report'),
+
+path(
+    'reminders/<int:reminder_id>/transparency/',
+    views.get_reminder_transparency,
+    name='reminder_transparency'
+),
