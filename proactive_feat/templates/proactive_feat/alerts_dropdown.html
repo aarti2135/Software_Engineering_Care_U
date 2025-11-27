@@ -1,0 +1,691 @@
+<!-- ========================================
+     FIXED: alerts_dropdown.html
+     ======================================== -->
+{% load static %}
+<style>
+/* ===== Proactive Bell (scoped & fixed) ===== */
+.probell { 
+  --bg:#111827; 
+  --ring:#0ea5e9; 
+  --card:#ffffff; 
+  --muted:#6b7280; 
+  --line:#eef2f7; 
+  --shadow:0 14px 32px rgba(0,0,0,.16); 
+}
+
+.probell * { 
+  box-sizing: border-box; 
+}
+
+/* Floating button - FIXED positioning */
+#pb-btn {
+  position: fixed; 
+  right: 20px; 
+  bottom: 20px; 
+  z-index: 1060;
+  border: 0; 
+  border-radius: 50%; 
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(120% 120% at 100% 0, var(--ring), #6366f1 50%, var(--bg) 80%);
+  color: #fff; 
+  font-weight: 600; 
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.22); 
+  cursor: pointer; 
+  transition: transform .12s ease;
+}
+
+#pb-btn:hover { 
+  transform: translateY(-2px) scale(1.05); 
+}
+
+#pb-btn .bell-icon {
+  font-size: 24px;
+}
+
+/* Count badge - FIXED to show numbers properly */
+#pb-count { 
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff3b30; 
+  color: #fff; 
+  font-weight: 700; 
+  border-radius: 12px;
+  padding: 3px 7px;
+  font-size: 11px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(255,59,48,0.4);
+  display: none; /* Hidden by default, shown via JS when count > 0 */
+}
+
+#pb-count.show {
+  display: block;
+}
+
+.pb-btn-text {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Dropdown panel */
+#pb-menu {
+  position: fixed; 
+  right: 20px; 
+  bottom: 90px; 
+  width: 380px; 
+  max-height: 75vh; 
+  overflow: hidden;
+  display: none; 
+  z-index: 1060; 
+  background: rgba(255,255,255,.95);
+  backdrop-filter: blur(12px); 
+  border: 1px solid var(--line); 
+  border-radius: 16px; 
+  box-shadow: var(--shadow);
+}
+
+#pb-menu.pb-open { 
+  display: block; 
+  animation: pb-fade .18s ease; 
+}
+
+@keyframes pb-fade { 
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  } 
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  } 
+}
+
+.pb-head { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  gap: 10px;
+  padding: 14px 16px; 
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+}
+
+.pb-title { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.pb-title-icon {
+  font-size: 20px;
+}
+
+.pb-actions { 
+  display: flex; 
+  gap: 6px; 
+}
+
+.pb-btn-sm { 
+  border: 1px solid var(--line); 
+  background: #fff; 
+  color: #111827; 
+  border-radius: 8px; 
+  padding: 6px 10px; 
+  font-size: .8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pb-btn-sm:hover { 
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.pb-body { 
+  padding: 0; 
+}
+
+.pb-list { 
+  list-style: none; 
+  margin: 0; 
+  padding: 0; 
+  max-height: 55vh; 
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+.pb-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pb-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.pb-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.pb-list::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+.pb-item { 
+  display: flex; 
+  gap: 12px; 
+  align-items: flex-start; 
+  padding: 12px 16px; 
+  border-bottom: 1px solid #f5f5f5; 
+  background: #fff;
+  transition: background 0.2s ease;
+}
+
+.pb-item:hover {
+  background: #fafbfc;
+}
+
+.pb-item:last-child { 
+  border-bottom: 0; 
+}
+
+.pb-chip { 
+  flex: 0 0 auto; 
+  font-size: 10px; 
+  padding: 4px 8px; 
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.pb-chip.abn { 
+  background: #fee2e2; 
+  color: #991b1b; 
+}
+
+.pb-chip.mis { 
+  background: #fef3c7; 
+  color: #92400e; 
+}
+
+.pb-chip.trn { 
+  background: #dbeafe; 
+  color: #1e3a8a; 
+}
+
+.pb-main { 
+  flex: 1 1 auto; 
+  min-width: 0; 
+}
+
+.pb-msg { 
+  font-weight: 600; 
+  line-height: 1.3;
+  font-size: 0.9rem;
+  color: #1C1C1E;
+}
+
+.pb-meta { 
+  color: var(--muted); 
+  font-size: .82rem; 
+  margin-top: 4px; 
+}
+
+.pb-right { 
+  flex: 0 0 auto; 
+}
+
+.pb-mark { 
+  border: 0; 
+  background: #111827; 
+  color: #fff; 
+  border-radius: 8px; 
+  padding: 6px 12px; 
+  font-size: .8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.pb-mark:hover { 
+  background: #374151;
+  transform: scale(1.05);
+}
+
+.pb-empty { 
+  text-align: center; 
+  padding: 32px 20px; 
+}
+
+.pb-empty .emo { 
+  font-size: 3rem; 
+  opacity: .4;
+  margin-bottom: 8px;
+}
+
+.pb-empty p { 
+  color: var(--muted); 
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.pb-foot { 
+  padding: 12px 16px; 
+  border-top: 1px solid var(--line); 
+  background: #fafbfc;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  border-radius: 0 0 16px 16px;
+}
+
+.pb-link { 
+  text-decoration: none; 
+}
+
+.pb-link .go { 
+  border: 1px solid var(--line); 
+  background: #fff; 
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: #111827;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pb-link .go:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.pb-muted { 
+  color: var(--muted); 
+  font-size: .85rem; 
+}
+
+/* Loading state */
+.pb-loading {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+}
+
+.pb-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(0,0,0,0.1);
+  border-top-color: #0ea5e9;
+  border-radius: 50%;
+  animation: pb-spin 0.8s linear infinite;
+}
+
+@keyframes pb-spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+
+<!-- Floating bell button -->
+<button id="pb-btn" class="probell" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="pb-menu">
+  <span class="bell-icon">🔔</span>
+  <span class="pb-btn-text">Alerts</span>
+  <span id="pb-count" class="pb-count">0</span>
+</button>
+
+<!-- Dropdown panel -->
+<section id="pb-menu" class="probell" role="dialog" aria-label="Proactive Alerts" aria-modal="false">
+  <header class="pb-head">
+    <div class="pb-title">
+      <span class="pb-title-icon">🔔</span>
+      <span>Alerts</span>
+      <span class="pb-muted" id="pb-sub">loading…</span>
+    </div>
+    <div class="pb-actions">
+      <button class="pb-btn-sm" id="pb-refresh" type="button" title="Refresh alerts">↻</button>
+      <button class="pb-btn-sm" id="pb-markall" type="button" title="Mark all as read">✓ All</button>
+    </div>
+  </header>
+  
+  <div class="pb-body" id="pb-body">
+    <ul class="pb-list" id="pb-list">
+      <!-- Loading state -->
+      <li class="pb-loading">
+        <div class="pb-spinner"></div>
+        <p class="mt-2 mb-0">Loading alerts...</p>
+      </li>
+    </ul>
+  </div>
+  
+  <footer class="pb-foot">
+    <span class="pb-muted">Stay proactive 💚</span>
+    <a class="pb-link" href="{% url 'proactive_feat:pro_alerts_list' %}">
+      <span class="go">View All →</span>
+    </a>
+  </footer>
+</section>
+
+<script>
+(function(){
+  const btn = document.getElementById('pb-btn');
+  const menu = document.getElementById('pb-menu');
+  const list = document.getElementById('pb-list');
+  const sub = document.getElementById('pb-sub');
+  const countEl = document.getElementById('pb-count');
+  const refreshBtn = document.getElementById('pb-refresh');
+  const markAllBtn = document.getElementById('pb-markall');
+  
+  if (!btn || !menu) {
+    console.error('Proactive alerts: Required elements not found');
+    return;
+  }
+
+  /* --- helpers --- */
+  const chip = (t) => {
+    if (t === 'threshold') return '<span class="pb-chip abn">Abnormal</span>';
+    if (t === 'missed_log') return '<span class="pb-chip mis">Missed</span>';
+    return '<span class="pb-chip trn">Trend</span>';
+  };
+
+  const tstr = (iso) => {
+    try { 
+      const date = new Date(iso);
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString(); 
+    } catch(e) { 
+      return ''; 
+    }
+  };
+
+  let cache = [];
+  let open = false;
+
+  function setOpen(v){
+    open = !!v;
+    btn.setAttribute('aria-expanded', open);
+    
+    if (open) {
+      menu.classList.add('pb-open');
+      document.addEventListener('keydown', onKey);
+      document.addEventListener('click', onOutside, {capture:true});
+    } else {
+      menu.classList.remove('pb-open');
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('click', onOutside, {capture:true});
+    }
+  }
+
+  function onKey(e){ 
+    if (e.key === 'Escape') setOpen(false); 
+  }
+
+  function onOutside(e){
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      setOpen(false);
+    }
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(!open);
+  });
+
+  async function hydrate(){
+    try {
+      sub.textContent = 'loading…';
+      
+      const res = await fetch('/proactive/alerts/json', {
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      const data = await res.json();
+      
+      // Validate data
+      if (!Array.isArray(data)) {
+        console.warn('Alerts data is not an array:', data);
+        cache = [];
+      } else {
+        cache = data;
+      }
+      
+      render(cache);
+    } catch(e) {
+      console.error('Failed to load alerts:', e);
+      list.innerHTML = `
+        <li class="pb-item">
+          <div class="pb-main">
+            <div class="pb-msg" style="color: #ff3b30;">⚠️ Couldn't load alerts</div>
+            <div class="pb-meta">Please check your connection and try again</div>
+          </div>
+        </li>
+      `;
+      sub.textContent = 'error';
+      countEl.textContent = '!';
+      countEl.classList.add('show');
+    }
+  }
+
+  function render(data){
+    const unread = data.filter(a => !a.is_read).length;
+    const today = new Date().toISOString().slice(0,10);
+    const todayCnt = data.filter(a => (a.created_at || '').slice(0,10) === today).length;
+    
+    // Update count badge - FIXED
+    countEl.textContent = unread > 99 ? '99+' : unread.toString();
+    
+    if (unread > 0) {
+      countEl.classList.add('show');
+      countEl.style.background = '#ff3b30';
+    } else {
+      countEl.classList.remove('show');
+    }
+    
+    // Update subtitle
+    sub.textContent = `${todayCnt} today · ${unread} unread`;
+    
+    // Render list
+    if (!Array.isArray(data) || data.length === 0) {
+      list.innerHTML = `
+        <div class="pb-empty">
+          <div class="emo">✓</div>
+          <p>No alerts right now.<br>You're all good!</p>
+        </div>
+      `;
+      return;
+    }
+    
+    list.innerHTML = data.slice(0, 15).map(a => `
+      <li class="pb-item" data-id="${a.id}">
+        ${chip(a.alert_type)}
+        <div class="pb-main">
+          <div class="pb-msg">${escapeHtml(a.message)}</div>
+          <div class="pb-meta">${tstr(a.created_at)}</div>
+        </div>
+        <div class="pb-right">
+          ${a.is_read ? '' : `<button class="pb-mark" data-mark="${a.id}" type="button">Mark</button>`}
+        </div>
+      </li>
+    `).join('');
+  }
+
+  // Escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Mark one alert as read
+  list.addEventListener('click', async (e) => {
+    const id = e.target.getAttribute('data-mark');
+    if (!id) return;
+    
+    e.target.disabled = true;
+    e.target.textContent = '...';
+    
+    try {
+      const res = await fetch(`/proactive/alerts/mark-read/${id}/`, {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      });
+      
+      const j = await res.json();
+      
+      if (j && j.ok) {
+        const idx = cache.findIndex(x => String(x.id) === String(id));
+        if (idx >= 0) cache[idx].is_read = true;
+        render(cache);
+        toast('✓ Marked as read');
+      } else {
+        throw new Error('Failed to mark as read');
+      }
+    } catch(err) { 
+      console.error(err);
+      e.target.disabled = false;
+      e.target.textContent = 'Mark';
+      toast('❌ Failed to mark as read', true);
+    }
+  });
+
+  // Mark all alerts as read
+  markAllBtn.addEventListener('click', async () => {
+    const toMark = cache.filter(a => !a.is_read).map(a => a.id);
+    
+    if (!toMark.length) {
+      toast('✓ All caught up!');
+      return;
+    }
+    
+    markAllBtn.disabled = true;
+    markAllBtn.textContent = '...';
+    
+    try {
+      // Mark all in parallel
+      await Promise.all(
+        toMark.map(id => 
+          fetch(`/proactive/alerts/mark-read/${id}/`, {
+            credentials: 'same-origin',
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': getCookie('csrftoken')
+            }
+          })
+        )
+      );
+      
+      cache = cache.map(a => ({...a, is_read: true}));
+      render(cache);
+      toast('✓ All caught up!');
+    } catch(e) {
+      console.error('Failed to mark all:', e);
+      toast('❌ Some alerts failed to update', true);
+    } finally {
+      markAllBtn.disabled = false;
+      markAllBtn.textContent = '✓ All';
+    }
+  });
+
+  // Refresh button
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = '↻';
+    hydrate().finally(() => {
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = '↻';
+    });
+  });
+
+  // Get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Toast notification
+  function toast(msg, isError = false) {
+    let t = document.getElementById('pro-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'pro-toast';
+      t.style.cssText = `
+        position: fixed;
+        right: 20px;
+        bottom: 100px;
+        background: ${isError ? '#ff3b30' : '#111827'};
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 10px;
+        box-shadow: 0 10px 24px rgba(0,0,0,.3);
+        z-index: 1070;
+        font-size: 0.9rem;
+        font-weight: 500;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      `;
+      document.body.appendChild(t);
+    }
+    
+    t.textContent = msg;
+    t.style.background = isError ? '#ff3b30' : '#111827';
+    t.style.opacity = '1';
+    t.style.display = 'block';
+    
+    setTimeout(() => {
+      t.style.opacity = '0';
+      setTimeout(() => t.style.display = 'none', 200);
+    }, 2000);
+  }
+
+  // Initial load + periodic refresh (every 60s)
+  hydrate();
+  const refreshInterval = setInterval(hydrate, 60000);
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(refreshInterval);
+  });
+})();
+</script>

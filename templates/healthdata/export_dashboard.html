@@ -1,0 +1,401 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Export Health Report · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #007AFF;
+      --secondary: #5856D6;
+      --success: #34C759;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --text-primary: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --card-radius: 16px;
+      --sidebar-width: 80px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar-left {
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      padding: 2rem 0;
+      position: fixed;
+      width: var(--sidebar-width);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      transition: all 0.2s ease;
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .nav-icon:hover,
+    .nav-icon.active {
+      background: #e5e5ea;
+      color: var(--text-primary);
+    }
+
+    .main-content {
+      grid-column: 2;
+      padding: 2rem;
+      margin-left: var(--sidebar-width);
+      max-width: 900px;
+    }
+
+    .export-card {
+      background: var(--bg-primary);
+      border-radius: var(--card-radius);
+      padding: 2rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .export-card h5 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .option-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+    }
+
+    .option-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .option-card.selected {
+      border-color: var(--primary);
+      background: rgba(0, 122, 255, 0.05);
+    }
+
+    .btn-export {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(0,122,255,0.25);
+    }
+
+    .btn-export:hover {
+      background: #005FCC;
+      transform: translateY(-2px);
+    }
+
+    .btn-export:disabled {
+      background: var(--text-secondary);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .preview-section {
+      background: #F9FAFB;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .preview-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .spinner-border-sm {
+      width: 1rem;
+      height: 1rem;
+      border-width: 0.15em;
+    }
+  </style>
+</head>
+
+<body>
+<div class="app-container">
+  <!-- Sidebar -->
+  <nav class="sidebar-left">
+    <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+
+    <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+      <img src="{% static 'img/home_icon.png' %}" width="22">
+    </a>
+    <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+      <img src="{% static 'img/analytics_icon.png' %}" width="22">
+    </a>
+    <a href="{% url 'nutrition_dashboard' %}" class="nav-icon" data-tooltip="Nutrition">
+      <img src="{% static 'img/nutrition_icon.png' %}" width="22">
+    </a>
+    <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+      <img src="{% static 'img/goals_icon.png' %}" width="22">
+    </a>
+    <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
+      <img src="{% static 'img/reminders_icon.png' %}" width="22">
+    </a>
+    <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+      <img src="{% static 'img/logout_icon.png' %}" width="22">
+    </a>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="mb-4">
+      <h3 class="fw-bold">📄 Export Health Report</h3>
+      <p class="text-muted">Generate a comprehensive PDF report for your doctor visit</p>
+    </div>
+
+    <!-- Report Options -->
+    <div class="export-card">
+      <h5>Select Report Period</h5>
+      <p class="text-muted small mb-3">Choose how many days of data to include</p>
+
+      <div class="option-card" data-days="7">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Last 7 Days</strong>
+            <p class="text-muted small mb-0">Quick weekly summary</p>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="days" value="7" id="days7">
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card selected" data-days="30">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Last 30 Days</strong>
+            <p class="text-muted small mb-0">Recommended for doctor visits</p>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="days" value="30" id="days30" checked>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-card" data-days="90">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Last 90 Days</strong>
+            <p class="text-muted small mb-0">Comprehensive quarterly review</p>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="days" value="90" id="days90">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What's Included -->
+    <div class="export-card">
+      <h5>What's Included in Your Report</h5>
+
+      <div class="preview-section">
+        <div class="preview-item">
+          <div class="preview-icon">👤</div>
+          <div>
+            <strong>Patient Information</strong>
+            <p class="text-muted small mb-0">Age, height, weight, BMI</p>
+          </div>
+        </div>
+
+        <div class="preview-item">
+          <div class="preview-icon">🍎</div>
+          <div>
+            <strong>Nutrition Summary</strong>
+            <p class="text-muted small mb-0">Calorie averages, macros, logging consistency</p>
+          </div>
+        </div>
+
+        <div class="preview-item">
+          <div class="preview-icon">📊</div>
+          <div>
+            <strong>Health Metrics</strong>
+            <p class="text-muted small mb-0">Glucose, activity, sleep data</p>
+          </div>
+        </div>
+
+        <div class="preview-item">
+          <div class="preview-icon">🤖</div>
+          <div>
+            <strong>AI-Flagged Concerns</strong>
+            <p class="text-muted small mb-0">Automated health pattern detection</p>
+          </div>
+        </div>
+
+        <div class="preview-item">
+          <div class="preview-icon">🎯</div>
+          <div>
+            <strong>Active Goals</strong>
+            <p class="text-muted small mb-0">Progress tracking</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate Button -->
+    <div class="text-center">
+      <button
+        type="button"
+        class="btn-export"
+        id="generateBtn"
+        onclick="generateReport()"
+      >
+        <span id="btnText">📥 Generate PDF Report</span>
+        <span id="btnSpinner" class="d-none">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Generating...
+        </span>
+      </button>
+
+      <p class="text-muted small mt-3">
+        Report generation typically takes 3-5 seconds
+      </p>
+    </div>
+
+    <!-- Success Message -->
+    <div id="successMessage" class="alert alert-success mt-4 d-none" role="alert">
+      <strong>✅ Report generated successfully!</strong><br>
+      Your download should start automatically. If not, click the button above again.
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Handle option card selection
+document.querySelectorAll('.option-card').forEach(card => {
+  card.addEventListener('click', function() {
+    // Remove selected from all
+    document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+
+    // Add selected to this one
+    this.classList.add('selected');
+
+    // Check the radio button
+    const radio = this.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
+  });
+});
+
+// Generate report
+async function generateReport() {
+  const btn = document.getElementById('generateBtn');
+  const btnText = document.getElementById('btnText');
+  const btnSpinner = document.getElementById('btnSpinner');
+  const successMsg = document.getElementById('successMessage');
+
+  // Get selected days
+  const selectedDays = document.querySelector('input[name="days"]:checked').value;
+
+  // Disable button and show spinner
+  btn.disabled = true;
+  btnText.classList.add('d-none');
+  btnSpinner.classList.remove('d-none');
+  successMsg.classList.add('d-none');
+
+  try {
+    // Generate PDF
+    const response = await fetch(`{% url 'generate_health_report' %}?days=${selectedDays}`, {
+      method: 'GET',
+      credentials: 'same-origin'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate report');
+    }
+
+    // Download file
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CareU_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    // Show success message
+    successMsg.classList.remove('d-none');
+
+  } catch (error) {
+    alert('Error generating report. Please try again.');
+    console.error('Error:', error);
+  } finally {
+    // Re-enable button
+    btn.disabled = false;
+    btnText.classList.remove('d-none');
+    btnSpinner.classList.add('d-none');
+  }
+}
+</script>
+</body>
+</html>

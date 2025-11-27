@@ -1,0 +1,39 @@
+# IDE
+.idea/
+*.iml
+*.iws
+.vscode/
+.cursor/
+
+# Python bytecode & cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual env
+.venv/
+
+# Django DB & generated files
+db.sqlite3
+*.sqlite3
+*.db
+media/
+staticfiles/
+
+# Environment variables / secrets
+.env
+.env.*
+.env.local
+
+# Logs
+*.log
+
+# Backup files
+*backup.json
+
+# OS files
+.DS_Store
+Thumbs.db

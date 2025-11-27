@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Avatar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .avatar-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+        .avatar-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .avatar-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .avatar-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin: 0 auto 15px;
+            border: 3px solid #eee;
+        }
+        .avatar-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .select-btn {
+            display: none;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .avatar-card.selected .select-btn {
+            display: inline-block;
+        }
+        .select-btn:hover {
+            background: #5568d3;
+        }
+        .current-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'dashboard' %}" class="back-btn">← Back to Dashboard</a>
+
+        <div class="header">
+            <h1>Choose Your Avatar</h1>
+            <p>Select an avatar that represents you</p>
+        </div>
+
+        <div class="avatar-grid">
+            {% for avatar in avatars %}
+            <form method="post" style="display: contents;">
+                {% csrf_token %}
+                <input type="hidden" name="avatar_id" value="{{ avatar.id }}">
+                <div class="avatar-card {% if current_avatar.id == avatar.id %}selected{% endif %}"
+                     onclick="this.parentElement.submit()">
+                    <div class="avatar-image">
+                        <img src="{{ avatar.image.url }}" alt="{{ avatar.name }}">
+                    </div>
+                    <div class="avatar-name">{{ avatar.name }}</div>
+                    {% if current_avatar.id == avatar.id %}
+                        <span class="current-badge">Current</span>
+                    {% else %}
+                        <button type="submit" class="select-btn">Select</button>
+                    {% endif %}
+                </div>
+            </form>
+            {% empty %}
+            <p style="grid-column: 1/-1; text-align: center; color: white; font-size: 1.2em;">
+                No avatars available. Please contact the administrator.
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

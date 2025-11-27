@@ -1,0 +1,1170 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Nutrition Dashboard · CareU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #007AFF;
+      --secondary: #5856D6;
+      --success: #34C759;
+      --warning: #FF9500;
+      --danger: #FF3B30;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F2F2F7;
+      --text-primary: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --border: #E5E5EA;
+      --card-radius: 16px;
+      --sidebar-width: 80px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar-left {
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border);
+      padding: 2rem 0;
+      position: fixed;
+      width: var(--sidebar-width);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .nav-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      text-decoration: none;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .nav-icon:hover,
+    .nav-icon.active {
+      background: #e5e5ea;
+      color: var(--text-primary);
+    }
+
+    .nav-icon .alert-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--danger);
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(255, 59, 48, 0.4);
+    }
+
+    .main-content {
+      grid-column: 2;
+      padding: 2rem;
+      margin-left: var(--sidebar-width);
+    }
+
+    .card {
+      border: 0;
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      background: var(--bg-primary);
+    }
+
+    .stat-pill {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: .4rem .7rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.05);
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #005ad3;
+    }
+
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    hr {
+      border-color: var(--border);
+    }
+
+    .doctor-discussion-card {
+      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+      border: 1px solid #90CAF9;
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,122,255,0.1);
+    }
+
+    .doctor-discussion-card:hover {
+      box-shadow: 0 6px 20px rgba(0,122,255,0.15);
+      transform: translateY(-2px);
+      transition: all 0.2s ease;
+    }
+
+    .day-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1rem;
+      min-width: 70px;
+      border: 2px solid #E5E5EA;
+      border-radius: 12px;
+      background: white;
+      text-decoration: none;
+      color: #1C1C1E;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .day-button:hover {
+      border-color: #007AFF;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,122,255,0.15);
+    }
+
+    .day-button.active {
+      background: linear-gradient(135deg, #007AFF, #5856D6);
+      border-color: #007AFF;
+      color: white;
+      font-weight: 600;
+    }
+
+    .day-button.today:not(.active) {
+      border-color: #34C759;
+      background: #F0FFF4;
+    }
+
+    .day-button.has-data:not(.active) {
+      background: #F8F9FA;
+    }
+
+    .day-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .day-number {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .data-indicator {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      color: #34C759;
+      font-size: 0.5rem;
+    }
+
+    .day-button.active .data-indicator {
+      color: white;
+    }
+
+    /* ===== PROACTIVE HEALTH SECTION STYLES ===== */
+    .proactive-health-wrapper {
+      background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-top: 3rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .proactive-health-wrapper h4 {
+      font-weight: 700;
+      color: #1C1C1E;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.5rem;
+    }
+
+    .alert-summary-card {
+      background: white;
+      border: 1px solid #E5E5EA;
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .alert-summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .alert-summary-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #1C1C1E;
+    }
+
+    .alert-badge-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .alert-stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: #F2F2F7;
+      color: #1C1C1E;
+    }
+
+    .alert-stat-badge.danger {
+      background: #FFEBEE;
+      color: #C62828;
+    }
+
+    .alert-stat-badge.warning {
+      background: #FFF3E0;
+      color: #E65100;
+    }
+
+    .alert-stat-badge.success {
+      background: #E8F5E9;
+      color: #2E7D32;
+    }
+
+    .alert-stat-badge .count {
+      background: rgba(0,0,0,0.1);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-weight: 700;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .alerts-list-container {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .alerts-list-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .alerts-list-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    .alerts-list-container::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+
+    .alerts-list-container::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+
+    .alert-item {
+      background: #fff;
+      border: 1px solid #E5E5EA;
+      border-left: 4px solid #FF3B30;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      transition: all 0.2s ease;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .alert-item:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transform: translateX(4px);
+    }
+
+    .alert-item.warning-level {
+      border-left-color: #FF9500;
+    }
+
+    .alert-item.info-level {
+      border-left-color: #007AFF;
+    }
+
+    .alert-item-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .alert-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .alert-item-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .alert-type-badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .alert-type-badge.abnormal {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .alert-type-badge.missed {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .alert-type-badge.trend {
+      background: #DBEAFE;
+      color: #1E3A8A;
+    }
+
+    .alert-item-message {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #1C1C1E;
+      line-height: 1.4;
+      margin-bottom: 0.25rem;
+    }
+
+    .alert-item-time {
+      font-size: 0.8rem;
+      color: #8E8E93;
+    }
+
+    .alert-item-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .alert-action-btn {
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .alert-action-btn.mark-read {
+      background: #1C1C1E;
+      color: white;
+    }
+
+    .alert-action-btn.mark-read:hover {
+      background: #374151;
+      transform: scale(1.05);
+    }
+
+    .alerts-empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #8E8E93;
+    }
+
+    .alerts-empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .alerts-empty-state h6 {
+      font-weight: 600;
+      color: #1C1C1E;
+      margin-bottom: 0.5rem;
+    }
+
+    .alerts-loading {
+      text-align: center;
+      padding: 2rem;
+      color: #8E8E93;
+    }
+
+    .alerts-loading .loading-spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 4px solid rgba(0,122,255,0.2);
+      border-top-color: #007AFF;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .vital-log-card {
+      background: white;
+      border: 1px solid #E5E5EA;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      height: 100%;
+    }
+
+    .vital-log-card h6 {
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: #1C1C1E;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.05rem;
+    }
+
+    .vital-log-card .form-label {
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #1C1C1E;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .vital-log-card .form-select,
+    .vital-log-card .form-control {
+      border-radius: 10px;
+      border: 1px solid #E5E5EA;
+      padding: 0.65rem 0.75rem;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+      width: 100%;
+    }
+
+    .vital-log-card .form-select:focus,
+    .vital-log-card .form-control:focus {
+      border-color: #007AFF;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.1);
+      outline: none;
+    }
+
+    .vital-type-hint {
+      font-size: 0.8rem;
+      color: #8E8E93;
+      margin-top: 0.25rem;
+      font-style: italic;
+    }
+
+    .recent-vitals-card {
+      background: white;
+      border: 1px solid #E5E5EA;
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      height: 100%;
+    }
+
+    .recent-vitals-card h6 {
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: #1C1C1E;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 1.05rem;
+    }
+
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .vital-stat {
+      background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+      border: 1px solid #E5E5EA;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .vital-stat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .vital-stat-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .vital-stat-label {
+      font-size: 0.75rem;
+      color: #8E8E93;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .vital-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1C1C1E;
+    }
+
+    .vital-stat-unit {
+      font-size: 0.8rem;
+      color: #8E8E93;
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      .proactive-health-wrapper {
+        padding: 1.5rem;
+      }
+
+      .alert-summary-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .vitals-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <nav class="sidebar-left">
+      <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+
+      <a href="{% url 'dashboard' %}" class="nav-icon" data-tooltip="Home">
+        <img src="{% static 'img/home_icon.png' %}" alt="Home" width="22" height="22">
+      </a>
+      <a href="{% url 'analytics:analytics_dashboard' %}" class="nav-icon" data-tooltip="Analytics">
+        <img src="{% static 'img/analytics_icon.png' %}" alt="Analytics" width="22" height="22">
+      </a>
+      <a href="{% url 'nutrition_dashboard' %}" class="nav-icon active" data-tooltip="Nutrition">
+        <img src="{% static 'img/nutrition_icon.png' %}" alt="Nutrition" width="22" height="22">
+      </a>
+      <a href="{% url 'goal_dashboard' %}" class="nav-icon" data-tooltip="Goals">
+        <img src="{% static 'img/goals_icon.png' %}" alt="Goals" width="22" height="22">
+      </a>
+      <a href="{% url 'reminders_dashboard' %}" class="nav-icon" data-tooltip="Reminders">
+        <img src="{% static 'img/reminders_icon.png' %}" alt="Reminders" width="22" height="22">
+        <span class="alert-badge" id="reminders-badge" style="display: none;">0</span>
+      </a>
+      <a href="{% url 'ai_agent:chat_dashboard' %}" class="nav-icon" data-tooltip="Chats">
+        <img src="{% static 'img/chats_icon.png' %}" alt="Chats" width="22" height="22">
+      </a>
+      <a href="{% url 'usermanagement:consent' %}" class="nav-icon" data-tooltip="Consent">
+        <img src="{% static 'img/consent_icon.png' %}" alt="Consent" width="22" height="22">
+      </a>
+      <a href="#" class="nav-icon" data-tooltip="Settings">
+        <img src="{% static 'img/settings_icon.png' %}" alt="Settings" width="22" height="22">
+      </a>
+      <a href="{% url 'User_Login:logout' %}" class="nav-icon" data-tooltip="Logout">
+        <img src="{% static 'img/logout_icon.png' %}" alt="Logout" width="22" height="22">
+      </a>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <!-- Banner -->
+      <div class="alert alert-info d-flex align-items-center justify-content-between mb-4"
+           style="border-radius: 12px; border: 0; box-shadow: 0 4px 12px rgba(20,40,80,.06);">
+        <div class="d-flex align-items-center gap-2">
+          <span style="font-size: 1.5rem;">💡</span>
+          <div>
+            <strong>Health Insights Available</strong>
+            <p class="mb-0 small">Check your personalized health recommendations</p>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <a href="{% url 'reminders_dashboard' %}" class="btn btn-primary btn-sm">View Insights</a>
+          <a href="{% url 'usermanagement:provider_alerts' %}" class="btn btn-outline-warning btn-sm">🩺 Provider Alerts</a>
+        </div>
+      </div>
+
+      <!-- Doctor Discussion Topics Section -->
+      <div class="doctor-discussion-card">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <div style="font-size: 2.5rem;">💬</div>
+            <div>
+              <h5 class="mb-1 fw-bold" style="color: #1C1C1E;">Prepare for Your Doctor Visit</h5>
+              <p class="mb-0 text-muted">Get AI-generated discussion topics based on your health data</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary btn-lg"
+            id="generateDiscussionBtn"
+            style="border-radius: 12px; padding: 0.75rem 1.5rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,122,255,0.3);">
+            ✨ Generate Topics
+          </button>
+        </div>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Week Navigation -->
+      <div class="card mb-4 p-4" style="border-radius: 16px;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0 fw-bold">📅 Select Day</h5>
+          <a href="{% url 'nutrition_dashboard' %}" class="btn btn-sm btn-outline-primary">
+            Today
+          </a>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <a href="?date={{ prev_week_date|date:'Y-m-d' }}"
+             class="btn btn-outline-secondary">
+            ← Previous Week
+          </a>
+
+          <div class="flex-grow-1 text-center fw-semibold text-muted">
+            {{ week_start|date:"M d" }} - {{ week_end|date:"M d, Y" }}
+          </div>
+
+          <a href="?date={{ next_week_date|date:'Y-m-d' }}"
+             class="btn btn-outline-secondary">
+            Next Week →
+          </a>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-center flex-wrap">
+          {% for day in week_days %}
+          <a href="?date={{ day.date|date:'Y-m-d' }}"
+             class="day-button {% if day.is_selected %}active{% endif %} {% if day.is_today %}today{% endif %} {% if day.has_data %}has-data{% endif %}"
+             data-date="{{ day.date|date:'Y-m-d' }}">
+            <div class="day-name">{{ day.day_name }}</div>
+            <div class="day-number">{{ day.day_number }}</div>
+            {% if day.has_data %}
+            <div class="data-indicator">●</div>
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Selected Day Info -->
+      <div class="card mb-4 p-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between">
+          <div class="fw-semibold">
+            <span class="text-primary">{{ selected_date|date:"l, F j, Y" }}</span>
+            {% if selected_date == today %}
+            <span class="badge bg-success ms-2">Today</span>
+            {% endif %}
+            Totals:
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="stat-pill">Calories: <strong>{{ day_totals.calories|floatformat:0 }}</strong></span>
+            <span class="stat-pill">Protein: <strong>{{ day_totals.protein|floatformat:1 }}</strong> g</span>
+            <span class="stat-pill">Carbs: <strong>{{ day_totals.carbs|floatformat:1 }}</strong> g</span>
+            <span class="stat-pill">Fat: <strong>{{ day_totals.fat|floatformat:1 }}</strong> g</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Entry + Import -->
+      <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+          <div class="card p-4">
+            <h5 class="section-title">Add Nutrition Entry</h5>
+            <form method="post" novalidate>
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label">Logged at</label>{{ form.logged_at }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Meal type</label>{{ form.meal_type }}
+              </div>
+              <div class="row">
+                <div class="col-6 mb-3"><label class="form-label">Calories</label>{{ form.calories }}</div>
+                <div class="col-6 mb-3"><label class="form-label">Protein g</label>{{ form.protein_g }}</div>
+                <div class="col-6 mb-3"><label class="form-label">Carbs g</label>{{ form.carbs_g }}</div>
+                <div class="col-6 mb-3"><label class="form-label">Fat g</label>{{ form.fat_g }}</div>
+              </div>
+              <div class="mb-3"><label class="form-label">Notes</label>{{ form.notes }}</div>
+              <button class="btn btn-primary w-100" type="submit">Save</button>
+            </form>
+
+            <hr class="my-4">
+            <h6>Or Import from CSV</h6>
+            <form method="post" enctype="multipart/form-data" action="{% url 'nutrition_import' %}">
+              {% csrf_token %}
+              <input type="file" name="csv_file" accept=".csv" class="form-control mb-2" required>
+              <button type="submit" class="btn btn-outline-success w-100">Upload CSV</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Entries Table -->
+        <div class="col-lg-7">
+          <div class="card p-4">
+            <h5 class="section-title mb-3">Your Entries</h5>
+            {% if entries %}
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Date</th>
+                      <th>Meal</th>
+                      <th class="text-end">Calories</th>
+                      <th class="text-end">Protein (g)</th>
+                      <th class="text-end">Carbs (g)</th>
+                      <th class="text-end">Fat (g)</th>
+                      <th>Notes</th>
+                      <th class="text-end">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for e in entries %}
+                    <tr>
+                      <td>{{ e.logged_at }}</td>
+                      <td>{{ e.meal_type }}</td>
+                      <td class="text-end">{{ e.calories }}</td>
+                      <td class="text-end">{{ e.protein_g|default:"—" }}</td>
+                      <td class="text-end">{{ e.carbs_g|default:"—" }}</td>
+                      <td class="text-end">{{ e.fat_g|default:"—" }}</td>
+                      <td class="text-break" style="max-width: 260px;">{{ e.notes }}</td>
+                      <td class="text-end">
+                        <div class="btn-group" role="group">
+                          <a class="btn btn-sm btn-outline-primary" href="{% url 'nutrition_edit' e.id %}"
+                             style="border-radius: 8px 0 0 8px; min-width: 65px;">
+                            Edit
+                          </a>
+                          <a class="btn btn-sm btn-outline-danger js-delete" href="{% url 'nutrition_delete' e.id %}"
+                             style="border-radius: 0 8px 8px 0; min-width: 65px;">
+                            Delete
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted mb-0">No entries yet – add your first one or import a CSV file.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- PROACTIVE HEALTH SECTION -->
+      <div class="proactive-health-wrapper" id="pro-vitals">
+        <h4>🏥 Proactive Health Monitoring</h4>
+
+        <!-- Alert Summary Card -->
+        <div class="alert-summary-card">
+          <div class="alert-summary-header">
+            <div class="alert-summary-title">
+              <span>🔔</span>
+              <span>Health Alerts</span>
+            </div>
+
+            <div class="alert-badge-group">
+              <div class="alert-stat-badge success" id="badge-today">
+                <span>Today</span>
+                <span class="count" id="count-today">0</span>
+              </div>
+              <div class="alert-stat-badge warning" id="badge-unread">
+                <span>Unread</span>
+                <span class="count" id="count-unread">0</span>
+              </div>
+              <div class="alert-stat-badge danger" id="badge-abnormal">
+                <span>Abnormal</span>
+                <span class="count" id="count-abnormal">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alerts List -->
+          <div class="alerts-list-container" id="alerts-container">
+            <div class="alerts-loading">
+              <div class="loading-spinner"></div>
+              <p class="mb-0">Loading health alerts...</p>
+            </div>
+          </div>
+
+          <!-- View All Button -->
+          <div class="text-end mt-3">
+            <a href="{% url 'proactive_feat:pro_alerts_list' %}" class="btn btn-outline-primary btn-sm">
+              View All Alerts →
+            </a>
+          </div>
+        </div>
+
+        <!-- Vital Log & Recent Stats -->
+        <div class="row g-4">
+          <!-- Quick Vital Log -->
+          <div class="col-lg-5">
+            <div class="vital-log-card">
+              <h6>📝 Log Vital Sign</h6>
+              <form method="post" action="{% url 'proactive_feat:pro_vital_form' %}" id="vital-form" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'nutrition_dashboard' %}#pro-vitals">
+
+                <div class="mb-3">
+                  <label class="form-label" for="vital-type">Vital Type</label>
+                  <select name="kind" id="vital-type" class="form-select" required>
+                    <option value="" selected disabled>Choose vital type...</option>
+                    <option value="glucose">🩸 Blood Glucose</option>
+                    <option value="bp">💓 Blood Pressure</option>
+                    <option value="hr">❤️ Heart Rate</option>
+                    <option value="spo2">🫁 SpO₂ (Oxygen)</option>
+                    <option value="temp">🌡️ Body Temperature</option>
+                  </select>
+                  <div class="vital-type-hint" id="value-hint"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="vital-value">Value</label>
+                  <input type="number" name="value" id="vital-value" step="0.1" class="form-control" placeholder="e.g., 120" required>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label" for="vital-datetime">Measured At</label>
+                  <input type="datetime-local" name="measured_at" id="vital-datetime" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  💾 Save Vital Sign
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <h6>
+  <span>📝 Log Vital Sign</span>
+  <a href="{% url 'proactive_feat:pro_alerts_list' %}" class="btn btn-sm btn-outline-secondary">History</a>
+</h6>
+
+  <!-- Doctor Discussion Modal -->
+  {% include 'healthdata/partials/doctor_discussion_modal.html' %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'js/doctor_discussion.js' %}"></script>
+
+  <script>
+    // Delete confirmation
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.js-delete');
+      if (!btn) return;
+      if (!confirm('Delete this entry? This cannot be undone.')) e.preventDefault();
+    });
+
+    // Proactive Health Section JavaScript
+    (function() {
+      // Set current datetime for vital form
+      const datetimeInput = document.getElementById('vital-datetime');
+      if (datetimeInput && !datetimeInput.value) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        datetimeInput.value = now.toISOString().slice(0, 16);
+      }
+
+      // Value hints based on vital type
+      const vitalTypeSelect = document.getElementById('vital-type');
+      const valueHint = document.getElementById('value-hint');
+
+      if (vitalTypeSelect && valueHint) {
+        vitalTypeSelect.addEventListener('change', function() {
+          const hints = {
+            'glucose': 'Normal range: 70-100 mg/dL (fasting)',
+            'bp': 'Enter systolic value (e.g., 120 for 120/80)',
+            'hr': 'Normal range: 60-100 bpm',
+            'spo2': 'Normal range: 95-100%',
+            'temp': 'Normal range: 36.5-37.5°C (97.7-99.5°F)'
+          };
+          valueHint.textContent = hints[this.value] || '';
+        });
+      }
+
+      // Load and display alerts
+      async function loadAlerts() {
+        const container = document.getElementById('alerts-container');
+        const countToday = document.getElementById('count-today');
+        const countUnread = document.getElementById('count-unread');
+        const countAbnormal = document.getElementById('count-abnormal');
+
+        try {
+          const response = await fetch('/proactive/alerts/json', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const alerts = await response.json();
+
+          if (!Array.isArray(alerts)) {
+            throw new Error('Invalid response format');
+          }
+
+          // Calculate stats
+          const today = new Date().toISOString().slice(0, 10);
+          const stats = {
+            today: alerts.filter(a => (a.created_at || '').slice(0, 10) === today).length,
+            unread: alerts.filter(a => !a.is_read).length,
+            abnormal: alerts.filter(a => a.alert_type === 'threshold').length
+          };
+
+          // Update badges
+          countToday.textContent = stats.today;
+          countUnread.textContent = stats.unread;
+          countAbnormal.textContent = stats.abnormal;
+
+          document.getElementById('badge-today').className =
+            `alert-stat-badge ${stats.today > 0 ? 'warning' : 'success'}`;
+          document.getElementById('badge-unread').className =
+            `alert-stat-badge ${stats.unread > 0 ? 'warning' : 'success'}`;
+          document.getElementById('badge-abnormal').className =
+            `alert-stat-badge ${stats.abnormal > 0 ? 'danger' : 'success'}`;
+
+          // Render alerts
+          if (alerts.length === 0) {
+            container.innerHTML = `
+              <div class="alerts-empty-state">
+                <div class="alerts-empty-icon">✅</div>
+                <h6>All Clear!</h6>
+                <p class="mb-0">No health alerts at the moment. Keep up the good work!</p>
+              </div>
+            `;
+            return;
+          }
+
+          const latestAlerts = alerts.slice(0, 5);
+          container.innerHTML = latestAlerts.map(alert => {
+            const typeInfo = {
+              'threshold': { badge: 'abnormal', icon: '⚠️', level: 'danger' },
+              'missed_log': { badge: 'missed', icon: '⏰', level: 'warning' },
+              'trend': { badge: 'trend', icon: '📈', level: 'info' }
+            };
+
+            const info = typeInfo[alert.alert_type] || typeInfo['trend'];
+            const timeAgo = getTimeAgo(alert.created_at);
+
+            return `
+              <div class="alert-item ${info.level}-level" data-alert-id="${alert.id}">
+                <div class="alert-item-icon">${info.icon}</div>
+                <div class="alert-item-content">
+                  <div class="alert-item-header">
+                    <span class="alert-type-badge ${info.badge}">${info.badge}</span>
+                    <span class="alert-item-time">${timeAgo}</span>
+                  </div>
+                  <div class="alert-item-message">${escapeHtml(alert.message)}</div>
+                  ${!alert.is_read ? `
+                    <div class="alert-item-actions">
+                      <button class="alert-action-btn mark-read" onclick="markAlertRead(${alert.id})">
+                        ✓ Mark as Read
+                      </button>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }).join('');
+
+        } catch (error) {
+          console.error('Failed to load alerts:', error);
+          container.innerHTML = `
+            <div class="alerts-empty-state">
+              <div class="alerts-empty-icon">❌</div>
+              <h6>Failed to Load Alerts</h6>
+              <p class="mb-0">Please refresh the page or try again later.</p>
+              <button class="btn btn-sm btn-primary mt-3" onclick="location.reload()">Refresh Page</button>
+            </div>
+          `;
+        }
+      }
+
+      // Helper: Get time ago string
+      function getTimeAgo(isoString) {
+        try {
+          const date = new Date(isoString);
+          const now = new Date();
+          const diffMs = now - date;
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMins / 60);
+          const diffDays = Math.floor(diffHours / 24);
+
+          if (diffMins < 1) return 'Just now';
+          if (diffMins < 60) return `${diffMins}m ago`;
+          if (diffHours < 24) return `${diffHours}h ago`;
+          if (diffDays < 7) return `${diffDays}d ago`;
+          return date.toLocaleDateString();
+        } catch (e) {
+          return 'Recently';
+        }
+      }
+
+      // Helper: Escape HTML
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Global function to mark alert as read
+      window.markAlertRead = async function(alertId) {
+        try {
+          const response = await fetch(`/proactive/alerts/mark-read/${alertId}/`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'X-CSRFToken': getCookie('csrftoken'),
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+
+          if (result.ok) {
+            await loadAlerts();
+            showToast('✓ Alert marked as read');
+          } else {
+            throw new Error('Failed to mark as read');
+          }
+        } catch (error) {
+          console.error('Error marking alert as read:', error);
+          showToast('❌ Failed to update alert', true);
+        }
+      };
+
+      // Helper: Get CSRF token
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      // Helper: Show toast notification
+      function showToast(message, isError = false) {
+        let toast = document.getElementById('pro-health-toast');
+        if (!toast) {
+          toast = document.createElement('div');
+          toast.id = 'pro-health-toast';
+          toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${isError ? '#FF3B30' : '#34C759'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10000;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          `;
+          document.body.appendChild(toast);
+        }
+
+        toast.textContent = message;
+        toast.style.background = isError ? '#FF3B30' : '#34C759';
+        toast.style.opacity = '1';
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+        }, 2500);
+      }
+
+      // Load alerts now and every 60 seconds
+      loadAlerts();
+      setInterval(loadAlerts, 60000);
+    })();
+  </script>
+</body>
+</html>
