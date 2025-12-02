@@ -816,8 +816,13 @@ If everything looks acceptable and no alert is needed, set:
 
         # Always create a weekly summary so the provider sees something
         ProviderAlert.objects.create(
-            user=patient,
-            alert_type=assessment["title"] or "Weekly Nutrition Summary",
+            # Attach the alert to the PROVIDER (the one viewing the page)
+            user=self.provider,
+            # Include which patient this alert is about
+            alert_type=(
+                    (assessment["title"] or "Weekly Nutrition Summary")
+                    + f" · Patient: {patient.username}"
+            ),
             message=assessment["message"],
             severity=assessment["severity"],
             created_at=timezone.now(),
