@@ -102,7 +102,7 @@ def home_dashboard(request):
     today = timezone.localdate()
 
     # 1️⃣ Get today's steps
-    today_activity = ActivityData.objects.filter(user=user, date=today).first()
+    today_activity = ActivityData.objects.filter(user=user).order_by('-date').first()
     steps_today = today_activity.steps if today_activity else 0
 
     # 2️⃣ Get latest heart rate
