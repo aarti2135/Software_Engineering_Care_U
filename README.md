@@ -358,7 +358,7 @@ This project is developed as part of Concordia University's Software Engineering
 ## 🙏 Acknowledgments
 
 - Concordia University Department of Computer Science and Software Engineering
-- Course Instructor: Dr. [Instructor Name]
+- Course Instructor: Dr. Paula Lago
 - Google Gemini API for AI capabilities
 - Bootstrap and Chart.js communities for excellent documentation
 
